@@ -24,6 +24,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         databaseconn.h databaseconn.cpp
+        mainpage.h mainpage.cpp mainpage.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET young-eagles APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

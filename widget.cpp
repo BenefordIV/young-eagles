@@ -1,5 +1,6 @@
 #include "widget.h"
 #include "./ui_widget.h"
+#include "mainpage.h"
 #include <QSqlDatabase>
 #include <QMessageBox>
 
@@ -25,8 +26,9 @@ void Widget::on_pushButton_Login_clicked()
         mb.setText("Unable to connect to db");
         mb.exec();
     } else {
-        mb.setText("connected to db");
-        mb.exec();
+        mainpage *mp = new mainpage();
+        this->hide();
+        mp->openWindow(dbConn);
     }
 }
 
