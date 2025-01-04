@@ -1,2 +1,6 @@
 # young-eagles
-This is a QT based application that runs on a local machine. This application helps facilitate the creation and storage of Young Eagles data for EAA Chapter Fleming Field
+Changing to be a "GO" Web Application utilizing tools such as:
+- Swagger
+- SQLBoiler
+- AWS
+- Kubernetes
