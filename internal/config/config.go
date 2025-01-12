@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 const (
@@ -43,5 +44,10 @@ func GetDbPass() string {
 }
 
 func GetAppEnvLocation() string {
-	return viper.GetString(APP_ENV_LOCATION)
+	loc := os.Getenv(APP_ENV_LOCATION)
+	if len(loc) == 0 {
+		loc = "./"
+	}
+
+	return loc
 }
