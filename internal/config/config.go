@@ -11,6 +11,7 @@ const (
 	DB_HOST          = "DB_HOST"
 	DB_PORT          = "DB_PORT"
 	DB_PASS          = "DB_PASS"
+	DB_USER          = "DB_USER"
 	APP_ENV_LOCATION = "APP_ENV_LOCATION"
 )
 
@@ -38,6 +39,8 @@ func GetDbHost() string {
 func GetDbPort() int {
 	return viper.GetInt(DB_PORT)
 }
+
+func GetDbUsername() string { return viper.GetString(DB_USER) }
 
 func GetDbPass() string {
 	return viper.GetString(DB_PASS)
