@@ -9,8 +9,8 @@ pkgname = "dbmodels"
 host="young-eagle-developer.cxwcc8oqmytb.us-east-1.rds.amazonaws.com"
 sslmode="require"
 dbname="young_eagles_developer"
-user="ye_admin"
-pass="YoungEagles!"
+user=""
+pass=""
 
 [auto-columns]
 deleted = "deleted_ts"
