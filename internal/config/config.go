@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 const (
@@ -10,6 +11,7 @@ const (
 	DB_HOST          = "DB_HOST"
 	DB_PORT          = "DB_PORT"
 	DB_PASS          = "DB_PASS"
+	DB_USER          = "DB_USER"
 	APP_ENV_LOCATION = "APP_ENV_LOCATION"
 )
 
@@ -38,10 +40,17 @@ func GetDbPort() int {
 	return viper.GetInt(DB_PORT)
 }
 
+func GetDbUsername() string { return viper.GetString(DB_USER) }
+
 func GetDbPass() string {
 	return viper.GetString(DB_PASS)
 }
 
 func GetAppEnvLocation() string {
-	return viper.GetString(APP_ENV_LOCATION)
+	loc := os.Getenv(APP_ENV_LOCATION)
+	if len(loc) == 0 {
+		loc = "./"
+	}
+
+	return loc
 }

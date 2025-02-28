@@ -15,6 +15,7 @@ func TestGetConfig(t *testing.T) {
 	dbPass := GetDbPass()
 	dbHost := GetDbHost()
 	dbPort := GetDbPort()
+	dbUser := GetDbUsername()
 
 	assert.NotEmpty(t, dbName)
 	assert.NotEmpty(t, dbPort)
@@ -22,8 +23,9 @@ func TestGetConfig(t *testing.T) {
 	assert.NotEmpty(t, dbPass)
 	assert.NotEmpty(t, GetAppEnvLocation())
 
-	assert.Equal(t, "Test_Name", dbName)
-	assert.Equal(t, "Test_Pass", dbPass)
-	assert.Equal(t, "Test_HOST", dbHost)
-	assert.Equal(t, 1234, dbPort)
+	assert.Equal(t, "young_eagles_developer", dbName)
+	assert.Equal(t, "YoungEagles!", dbPass)
+	assert.Equal(t, "young-eagle-developer.cxwcc8oqmytb.us-east-1.rds.amazonaws.com", dbHost)
+	assert.Equal(t, 5432, dbPort)
+	assert.Equal(t, "ye_admin", dbUser)
 }
