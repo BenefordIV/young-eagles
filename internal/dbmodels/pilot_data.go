@@ -167,8 +167,8 @@ type pilotDatumL struct{}
 
 var (
 	pilotDatumAllColumns            = []string{"uuid", "pilot_first_name", "pilot_last_name", "pilot_email", "created_at", "updated_at", "deleted_ts", "eaa_chapter_number", "status"}
-	pilotDatumColumnsWithoutDefault = []string{"uuid", "pilot_first_name", "pilot_last_name", "pilot_email", "eaa_chapter_number"}
-	pilotDatumColumnsWithDefault    = []string{"created_at", "updated_at", "deleted_ts", "status"}
+	pilotDatumColumnsWithoutDefault = []string{"pilot_first_name", "pilot_last_name", "pilot_email", "eaa_chapter_number"}
+	pilotDatumColumnsWithDefault    = []string{"uuid", "created_at", "updated_at", "deleted_ts", "status"}
 	pilotDatumPrimaryKeyColumns     = []string{"uuid"}
 	pilotDatumGeneratedColumns      = []string{}
 )
