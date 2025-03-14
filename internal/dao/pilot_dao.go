@@ -10,6 +10,8 @@ import (
 type PilotDao interface {
 	AddPilot(ctx context.Context, pilot dbmodels.PilotDatum) (*dbmodels.PilotDatum, error)
 	GetPilotByNameChapterCombo(ctx context.Context, firstName, lastName string, eaaChapter int) (*dbmodels.PilotDatum, error)
+	GetPilotByUUID(ctx context.Context, uuid string) (*dbmodels.PilotDatum, error)
+	UpdatePilot(ctx context.Context, update *dbmodels.PilotDatum) (*dbmodels.PilotDatum, error)
 }
 
 type pilotDaoImpl struct {
@@ -43,4 +45,22 @@ func (p pilotDaoImpl) GetPilotByNameChapterCombo(ctx context.Context, firstName,
 	}
 
 	return pilot, nil
+}
+
+func (p pilotDaoImpl) GetPilotByUUID(ctx context.Context, uuid string) (*dbmodels.PilotDatum, error) {
+	pilot, err := dbmodels.PilotData(dbmodels.PilotDatumWhere.UUID.EQ(uuid)).One(ctx, p.dbConn.DbConn)
+	if err != nil {
+		return nil, err
+	}
+
+	return pilot, nil
+}
+
+func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *dbmodels.PilotDatum) (*dbmodels.PilotDatum, error) {
+	_, err := update.Update(ctx, p.dbConn.DbConn, boil.Infer())
+	if err != nil {
+		return nil, err
+	}
+
+	return update, nil
 }

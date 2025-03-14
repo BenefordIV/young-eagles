@@ -12,6 +12,8 @@ import (
 
 type PilotService interface {
 	PostPilotService(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error)
+	GetPilotData(ctx context.Context, pilotUuid string) (*models.Pilot, error)
+	PatchUpdatePilotData(ctx context.Context, pilotUuid string, body models.PatchPilotBodyRequest) (*models.Pilot, error)
 }
 
 type pilotServiceImpl struct {
@@ -46,4 +48,36 @@ func (p pilotServiceImpl) PostPilotService(ctx context.Context, firstName, lastN
 	}
 
 	return models.PilotFromDb(*dbModel), nil
+}
+
+func (p pilotServiceImpl) GetPilotData(ctx context.Context, pilotUuid string) (*models.Pilot, error) {
+	pilot, err := p.pilotDao.GetPilotByUUID(ctx, pilotUuid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return models.PilotFromDb(*pilot), nil
+}
+
+func (p pilotServiceImpl) PatchUpdatePilotData(ctx context.Context, pilotUuid string, body models.PatchPilotBodyRequest) (*models.Pilot, error) {
+	pilot, err := p.pilotDao.GetPilotByUUID(ctx, pilotUuid)
+	if err != nil {
+		return nil, err
+	}
+	if pilot == nil {
+		return nil, errors.New("pilot not found")
+	}
+
+	pilotUpdate, updated := body.GenerateUpdate(pilot)
+	if updated {
+		pilotDb, err := p.pilotDao.UpdatePilot(ctx, pilotUpdate)
+		if err != nil {
+			return nil, err
+		}
+
+		return models.PilotFromDb(*pilotDb), nil
+	}
+
+	return nil, errors.New("no changes made to pilot")
 }

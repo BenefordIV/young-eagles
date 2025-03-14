@@ -2,20 +2,16 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"time"
 	"young-eagles/internal/dbmodels"
 )
 
 type Pilot struct {
-	PilotUuid        uuid.UUID
-	PilotFirstName   string
-	PilotLastName    string
-	PilotEmail       string
-	EaaChapterNumber int
-	Status           PilotStatus
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	DeletedAt        time.Time
+	PilotUuid        uuid.UUID   `json:"pilotUuid"`
+	PilotFirstName   string      `json:"pilotFirstName"`
+	PilotLastName    string      `json:"pilotLastName"`
+	PilotEmail       string      `json:"pilotEmail"`
+	EaaChapterNumber int         `json:"eaaChapterNumber"`
+	Status           PilotStatus `json:"status"`
 }
 
 type PilotStatus string
@@ -48,8 +44,36 @@ func PilotFromDb(datum dbmodels.PilotDatum) *Pilot {
 		PilotEmail:       datum.PilotEmail,
 		EaaChapterNumber: datum.EaaChapterNumber,
 		Status:           status,
-		CreatedAt:        datum.CreatedAt.Time,
-		UpdatedAt:        datum.UpdatedAt.Time,
-		DeletedAt:        datum.DeletedTS.Time,
 	}
+}
+
+type PatchPilotBodyRequest struct {
+	Pilot Pilot `json:"pilot"`
+}
+
+func (r PatchPilotBodyRequest) GenerateUpdate(pilot *dbmodels.PilotDatum) (*dbmodels.PilotDatum, bool) {
+
+	changes := false
+
+	if r.Pilot.PilotFirstName != "" && r.Pilot.PilotFirstName != pilot.PilotFirstName {
+		pilot.PilotFirstName = r.Pilot.PilotFirstName
+		changes = true
+	}
+
+	if r.Pilot.PilotLastName != "" && r.Pilot.PilotLastName != pilot.PilotLastName {
+		pilot.PilotLastName = r.Pilot.PilotLastName
+		changes = true
+	}
+
+	if r.Pilot.PilotEmail != "" && r.Pilot.PilotEmail != pilot.PilotEmail {
+		pilot.PilotEmail = r.Pilot.PilotEmail
+		changes = true
+	}
+
+	if r.Pilot.EaaChapterNumber != 0 && r.Pilot.EaaChapterNumber != pilot.EaaChapterNumber {
+		pilot.EaaChapterNumber = r.Pilot.EaaChapterNumber
+		changes = true
+	}
+
+	return pilot, changes
 }
