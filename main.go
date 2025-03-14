@@ -42,6 +42,8 @@ func main() {
 	ps := services.NewPilotService(dao.NewPilotDao(dbConn))
 	ep := endpoints.MakePilotEndpoints(ps)
 	transport.PostPilotData(ep, v1Router)
+	transport.GetPilotData(ep, v1Router)
+	transport.PatchPilotData(ep, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
 
