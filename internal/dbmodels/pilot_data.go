@@ -335,6 +335,7 @@ func (pilotDatumL) LoadPilotFlightInformations(ctx context.Context, e boil.Conte
 	query := NewQuery(
 		qm.From(`flight_information`),
 		qm.WhereIn(`flight_information.pilot_uuid in ?`, argsSlice...),
+		qmhelper.WhereIsNull(`flight_information.deleted_ts`),
 	)
 	if mods != nil {
 		mods.Apply(query)

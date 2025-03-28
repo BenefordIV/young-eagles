@@ -1,16 +1,16 @@
-output = "internal/dbmodels"
+output="internal/dbmodels"
 no-tests = "true"
 no-hooks = "true"
-wipe = "true"
-add-soft-deletes = "true"
+wipe="true"
+add-soft-deletes="true"
 pkgname = "dbmodels"
 
 [psql]
 host="young-eagle-developer.cxwcc8oqmytb.us-east-1.rds.amazonaws.com"
 sslmode="require"
 dbname="young_eagles_developer"
-user=""
-pass=""
+user="ye_admin"
+pass="3dgeL0rd?!?"
 
 [auto-columns]
 deleted = "deleted_ts"

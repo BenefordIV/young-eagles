@@ -49,7 +49,7 @@ func MakePostPilotEndpoint(s services.PilotService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to models.PilotPostRequest")
 		}
 
-		p, err := s.PostPilotService(ctx, req.Body.PilotFirstName, req.Body.PilotLastName, req.Body.PilotEmail, req.Body.EaaChapterNumber)
+		p, err := s.PostPilotData(ctx, req.Body.PilotFirstName, req.Body.PilotLastName, req.Body.PilotEmail, req.Body.EaaChapterNumber)
 		if err != nil {
 			return nil, err
 		}

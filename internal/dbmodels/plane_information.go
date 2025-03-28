@@ -30,9 +30,9 @@ type PlaneInformation struct {
 	Model null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	// the make of airplane
 	Make      null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
-	CreatedAt null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt null.String `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	CreatedTS null.Time   `boil:"created_ts" json:"created_ts,omitempty" toml:"created_ts" yaml:"created_ts,omitempty"`
+	UpdatedTS null.Time   `boil:"updated_ts" json:"updated_ts,omitempty" toml:"updated_ts" yaml:"updated_ts,omitempty"`
+	DeletedTS null.Time   `boil:"deleted_ts" json:"deleted_ts,omitempty" toml:"deleted_ts" yaml:"deleted_ts,omitempty"`
 
 	R *planeInformationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L planeInformationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,32 +42,32 @@ var PlaneInformationColumns = struct {
 	CallNumber string
 	Model      string
 	Make       string
-	CreatedAt  string
-	UpdatedAt  string
-	DeletedAt  string
+	CreatedTS  string
+	UpdatedTS  string
+	DeletedTS  string
 }{
 	CallNumber: "call_number",
 	Model:      "model",
 	Make:       "make",
-	CreatedAt:  "created_at",
-	UpdatedAt:  "updated_at",
-	DeletedAt:  "deleted_at",
+	CreatedTS:  "created_ts",
+	UpdatedTS:  "updated_ts",
+	DeletedTS:  "deleted_ts",
 }
 
 var PlaneInformationTableColumns = struct {
 	CallNumber string
 	Model      string
 	Make       string
-	CreatedAt  string
-	UpdatedAt  string
-	DeletedAt  string
+	CreatedTS  string
+	UpdatedTS  string
+	DeletedTS  string
 }{
 	CallNumber: "plane_information.call_number",
 	Model:      "plane_information.model",
 	Make:       "plane_information.make",
-	CreatedAt:  "plane_information.created_at",
-	UpdatedAt:  "plane_information.updated_at",
-	DeletedAt:  "plane_information.deleted_at",
+	CreatedTS:  "plane_information.created_ts",
+	UpdatedTS:  "plane_information.updated_ts",
+	DeletedTS:  "plane_information.deleted_ts",
 }
 
 // Generated where
@@ -76,16 +76,16 @@ var PlaneInformationWhere = struct {
 	CallNumber whereHelperstring
 	Model      whereHelpernull_String
 	Make       whereHelpernull_String
-	CreatedAt  whereHelpernull_Time
-	UpdatedAt  whereHelpernull_Time
-	DeletedAt  whereHelpernull_String
+	CreatedTS  whereHelpernull_Time
+	UpdatedTS  whereHelpernull_Time
+	DeletedTS  whereHelpernull_Time
 }{
 	CallNumber: whereHelperstring{field: "\"plane_information\".\"call_number\""},
 	Model:      whereHelpernull_String{field: "\"plane_information\".\"model\""},
 	Make:       whereHelpernull_String{field: "\"plane_information\".\"make\""},
-	CreatedAt:  whereHelpernull_Time{field: "\"plane_information\".\"created_at\""},
-	UpdatedAt:  whereHelpernull_Time{field: "\"plane_information\".\"updated_at\""},
-	DeletedAt:  whereHelpernull_String{field: "\"plane_information\".\"deleted_at\""},
+	CreatedTS:  whereHelpernull_Time{field: "\"plane_information\".\"created_ts\""},
+	UpdatedTS:  whereHelpernull_Time{field: "\"plane_information\".\"updated_ts\""},
+	DeletedTS:  whereHelpernull_Time{field: "\"plane_information\".\"deleted_ts\""},
 }
 
 // PlaneInformationRels is where relationship names are stored.
@@ -116,9 +116,9 @@ func (r *planeInformationR) GetPlaneCallNumberFlightInformations() FlightInforma
 type planeInformationL struct{}
 
 var (
-	planeInformationAllColumns            = []string{"call_number", "model", "make", "created_at", "updated_at", "deleted_at"}
+	planeInformationAllColumns            = []string{"call_number", "model", "make", "created_ts", "updated_ts", "deleted_ts"}
 	planeInformationColumnsWithoutDefault = []string{"call_number"}
-	planeInformationColumnsWithDefault    = []string{"model", "make", "created_at", "updated_at", "deleted_at"}
+	planeInformationColumnsWithDefault    = []string{"model", "make", "created_ts", "updated_ts", "deleted_ts"}
 	planeInformationPrimaryKeyColumns     = []string{"call_number"}
 	planeInformationGeneratedColumns      = []string{}
 )
@@ -285,6 +285,7 @@ func (planeInformationL) LoadPlaneCallNumberFlightInformations(ctx context.Conte
 	query := NewQuery(
 		qm.From(`flight_information`),
 		qm.WhereIn(`flight_information.plane_call_number in ?`, argsSlice...),
+		qmhelper.WhereIsNull(`flight_information.deleted_ts`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -463,7 +464,7 @@ func (o *PlaneInformation) RemovePlaneCallNumberFlightInformations(ctx context.C
 
 // PlaneInformations retrieves all the records using an executor.
 func PlaneInformations(mods ...qm.QueryMod) planeInformationQuery {
-	mods = append(mods, qm.From("\"plane_information\""))
+	mods = append(mods, qm.From("\"plane_information\""), qmhelper.WhereIsNull("\"plane_information\".\"deleted_ts\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
 		queries.SetSelect(q, []string{"\"plane_information\".*"})
@@ -482,7 +483,7 @@ func FindPlaneInformation(ctx context.Context, exec boil.ContextExecutor, callNu
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"plane_information\" where \"call_number\"=$1", sel,
+		"select %s from \"plane_information\" where \"call_number\"=$1 and \"deleted_ts\" is null", sel,
 	)
 
 	q := queries.Raw(query, callNumber)
@@ -506,6 +507,16 @@ func (o *PlaneInformation) Insert(ctx context.Context, exec boil.ContextExecutor
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if queries.MustTime(o.CreatedTS).IsZero() {
+			queries.SetScanner(&o.CreatedTS, currTime)
+		}
+		if queries.MustTime(o.UpdatedTS).IsZero() {
+			queries.SetScanner(&o.UpdatedTS, currTime)
+		}
+	}
 
 	nzDefaults := queries.NonZeroDefaultSet(planeInformationColumnsWithDefault, o)
 
@@ -577,6 +588,12 @@ func (o *PlaneInformation) Insert(ctx context.Context, exec boil.ContextExecutor
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *PlaneInformation) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		queries.SetScanner(&o.UpdatedTS, currTime)
+	}
+
 	var err error
 	key := makeCacheKey(columns, nil)
 	planeInformationUpdateCacheMut.RLock()
@@ -704,6 +721,14 @@ func (o *PlaneInformation) Upsert(ctx context.Context, exec boil.ContextExecutor
 	if o == nil {
 		return errors.New("dbmodels: no plane_information provided for upsert")
 	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if queries.MustTime(o.CreatedTS).IsZero() {
+			queries.SetScanner(&o.CreatedTS, currTime)
+		}
+		queries.SetScanner(&o.UpdatedTS, currTime)
+	}
 
 	nzDefaults := queries.NonZeroDefaultSet(planeInformationColumnsWithDefault, o)
 
@@ -818,13 +843,31 @@ func (o *PlaneInformation) Upsert(ctx context.Context, exec boil.ContextExecutor
 
 // Delete deletes a single PlaneInformation record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *PlaneInformation) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *PlaneInformation) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if o == nil {
 		return 0, errors.New("dbmodels: no PlaneInformation provided for delete")
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), planeInformationPrimaryKeyMapping)
-	sql := "DELETE FROM \"plane_information\" WHERE \"call_number\"=$1"
+	var (
+		sql  string
+		args []interface{}
+	)
+	if hardDelete {
+		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), planeInformationPrimaryKeyMapping)
+		sql = "DELETE FROM \"plane_information\" WHERE \"call_number\"=$1"
+	} else {
+		currTime := time.Now().In(boil.GetLocation())
+		o.DeletedTS = null.TimeFrom(currTime)
+		wl := []string{"deleted_ts"}
+		sql = fmt.Sprintf("UPDATE \"plane_information\" SET %s WHERE \"call_number\"=$2",
+			strmangle.SetParamNames("\"", "\"", 1, wl),
+		)
+		valueMapping, err := queries.BindMapping(planeInformationType, planeInformationMapping, append(wl, planeInformationPrimaryKeyColumns...))
+		if err != nil {
+			return 0, err
+		}
+		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), valueMapping)
+	}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -845,12 +888,17 @@ func (o *PlaneInformation) Delete(ctx context.Context, exec boil.ContextExecutor
 }
 
 // DeleteAll deletes all matching rows.
-func (q planeInformationQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q planeInformationQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if q.Query == nil {
 		return 0, errors.New("dbmodels: no planeInformationQuery provided for delete all")
 	}
 
-	queries.SetDelete(q.Query)
+	if hardDelete {
+		queries.SetDelete(q.Query)
+	} else {
+		currTime := time.Now().In(boil.GetLocation())
+		queries.SetUpdate(q.Query, M{"deleted_ts": currTime})
+	}
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
@@ -866,19 +914,36 @@ func (q planeInformationQuery) DeleteAll(ctx context.Context, exec boil.ContextE
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o PlaneInformationSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o PlaneInformationSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	var args []interface{}
-	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), planeInformationPrimaryKeyMapping)
-		args = append(args, pkeyArgs...)
+	var (
+		sql  string
+		args []interface{}
+	)
+	if hardDelete {
+		for _, obj := range o {
+			pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), planeInformationPrimaryKeyMapping)
+			args = append(args, pkeyArgs...)
+		}
+		sql = "DELETE FROM \"plane_information\" WHERE " +
+			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, planeInformationPrimaryKeyColumns, len(o))
+	} else {
+		currTime := time.Now().In(boil.GetLocation())
+		for _, obj := range o {
+			pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), planeInformationPrimaryKeyMapping)
+			args = append(args, pkeyArgs...)
+			obj.DeletedTS = null.TimeFrom(currTime)
+		}
+		wl := []string{"deleted_ts"}
+		sql = fmt.Sprintf("UPDATE \"plane_information\" SET %s WHERE "+
+			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 2, planeInformationPrimaryKeyColumns, len(o)),
+			strmangle.SetParamNames("\"", "\"", 1, wl),
+		)
+		args = append([]interface{}{currTime}, args...)
 	}
-
-	sql := "DELETE FROM \"plane_information\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, planeInformationPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -925,7 +990,8 @@ func (o *PlaneInformationSlice) ReloadAll(ctx context.Context, exec boil.Context
 	}
 
 	sql := "SELECT \"plane_information\".* FROM \"plane_information\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, planeInformationPrimaryKeyColumns, len(*o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, planeInformationPrimaryKeyColumns, len(*o)) +
+		"and \"deleted_ts\" is null"
 
 	q := queries.Raw(sql, args...)
 
@@ -942,7 +1008,7 @@ func (o *PlaneInformationSlice) ReloadAll(ctx context.Context, exec boil.Context
 // PlaneInformationExists checks if the PlaneInformation row exists.
 func PlaneInformationExists(ctx context.Context, exec boil.ContextExecutor, callNumber string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"plane_information\" where \"call_number\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"plane_information\" where \"call_number\"=$1 and \"deleted_ts\" is null limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)

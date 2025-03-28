@@ -11,7 +11,7 @@ import (
 )
 
 type PilotService interface {
-	PostPilotService(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error)
+	PostPilotData(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error)
 	GetPilotData(ctx context.Context, pilotUuid string) (*models.Pilot, error)
 	PatchUpdatePilotData(ctx context.Context, pilotUuid string, body models.PatchPilotBodyRequest) (*models.Pilot, error)
 }
@@ -26,7 +26,7 @@ func NewPilotService(pilotDao dao.PilotDao) PilotService {
 	}
 }
 
-func (p pilotServiceImpl) PostPilotService(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error) {
+func (p pilotServiceImpl) PostPilotData(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error) {
 	pilot, _ := p.pilotDao.GetPilotByNameChapterCombo(ctx, firstName, lastName, eaaChapter)
 
 	if pilot != nil {

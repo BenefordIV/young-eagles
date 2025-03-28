@@ -30,9 +30,9 @@ type ChildInformation struct {
 	LastName       null.String `boil:"last_name" json:"last_name,omitempty" toml:"last_name" yaml:"last_name,omitempty"`
 	DateOfBirth    null.Time   `boil:"date_of_birth" json:"date_of_birth,omitempty" toml:"date_of_birth" yaml:"date_of_birth,omitempty"`
 	HasCertificate null.Bool   `boil:"has_certificate" json:"has_certificate,omitempty" toml:"has_certificate" yaml:"has_certificate,omitempty"`
-	CreatedAt      null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt      null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt      null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	CreatedTS      null.Time   `boil:"created_ts" json:"created_ts,omitempty" toml:"created_ts" yaml:"created_ts,omitempty"`
+	UpdatedTS      null.Time   `boil:"updated_ts" json:"updated_ts,omitempty" toml:"updated_ts" yaml:"updated_ts,omitempty"`
+	DeletedTS      null.Time   `boil:"deleted_ts" json:"deleted_ts,omitempty" toml:"deleted_ts" yaml:"deleted_ts,omitempty"`
 	ParentID       null.String `boil:"parent_id" json:"parent_id,omitempty" toml:"parent_id" yaml:"parent_id,omitempty"`
 
 	R *childInformationR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -45,9 +45,9 @@ var ChildInformationColumns = struct {
 	LastName       string
 	DateOfBirth    string
 	HasCertificate string
-	CreatedAt      string
-	UpdatedAt      string
-	DeletedAt      string
+	CreatedTS      string
+	UpdatedTS      string
+	DeletedTS      string
 	ParentID       string
 }{
 	UUID:           "uuid",
@@ -55,9 +55,9 @@ var ChildInformationColumns = struct {
 	LastName:       "last_name",
 	DateOfBirth:    "date_of_birth",
 	HasCertificate: "has_certificate",
-	CreatedAt:      "created_at",
-	UpdatedAt:      "updated_at",
-	DeletedAt:      "deleted_at",
+	CreatedTS:      "created_ts",
+	UpdatedTS:      "updated_ts",
+	DeletedTS:      "deleted_ts",
 	ParentID:       "parent_id",
 }
 
@@ -67,9 +67,9 @@ var ChildInformationTableColumns = struct {
 	LastName       string
 	DateOfBirth    string
 	HasCertificate string
-	CreatedAt      string
-	UpdatedAt      string
-	DeletedAt      string
+	CreatedTS      string
+	UpdatedTS      string
+	DeletedTS      string
 	ParentID       string
 }{
 	UUID:           "child_information.uuid",
@@ -77,9 +77,9 @@ var ChildInformationTableColumns = struct {
 	LastName:       "child_information.last_name",
 	DateOfBirth:    "child_information.date_of_birth",
 	HasCertificate: "child_information.has_certificate",
-	CreatedAt:      "child_information.created_at",
-	UpdatedAt:      "child_information.updated_at",
-	DeletedAt:      "child_information.deleted_at",
+	CreatedTS:      "child_information.created_ts",
+	UpdatedTS:      "child_information.updated_ts",
+	DeletedTS:      "child_information.deleted_ts",
 	ParentID:       "child_information.parent_id",
 }
 
@@ -226,9 +226,9 @@ var ChildInformationWhere = struct {
 	LastName       whereHelpernull_String
 	DateOfBirth    whereHelpernull_Time
 	HasCertificate whereHelpernull_Bool
-	CreatedAt      whereHelpernull_Time
-	UpdatedAt      whereHelpernull_Time
-	DeletedAt      whereHelpernull_Time
+	CreatedTS      whereHelpernull_Time
+	UpdatedTS      whereHelpernull_Time
+	DeletedTS      whereHelpernull_Time
 	ParentID       whereHelpernull_String
 }{
 	UUID:           whereHelperstring{field: "\"child_information\".\"uuid\""},
@@ -236,9 +236,9 @@ var ChildInformationWhere = struct {
 	LastName:       whereHelpernull_String{field: "\"child_information\".\"last_name\""},
 	DateOfBirth:    whereHelpernull_Time{field: "\"child_information\".\"date_of_birth\""},
 	HasCertificate: whereHelpernull_Bool{field: "\"child_information\".\"has_certificate\""},
-	CreatedAt:      whereHelpernull_Time{field: "\"child_information\".\"created_at\""},
-	UpdatedAt:      whereHelpernull_Time{field: "\"child_information\".\"updated_at\""},
-	DeletedAt:      whereHelpernull_Time{field: "\"child_information\".\"deleted_at\""},
+	CreatedTS:      whereHelpernull_Time{field: "\"child_information\".\"created_ts\""},
+	UpdatedTS:      whereHelpernull_Time{field: "\"child_information\".\"updated_ts\""},
+	DeletedTS:      whereHelpernull_Time{field: "\"child_information\".\"deleted_ts\""},
 	ParentID:       whereHelpernull_String{field: "\"child_information\".\"parent_id\""},
 }
 
@@ -280,9 +280,9 @@ func (r *childInformationR) GetChildFlightInformations() FlightInformationSlice 
 type childInformationL struct{}
 
 var (
-	childInformationAllColumns            = []string{"uuid", "first_name", "last_name", "date_of_birth", "has_certificate", "created_at", "updated_at", "deleted_at", "parent_id"}
+	childInformationAllColumns            = []string{"uuid", "first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts", "parent_id"}
 	childInformationColumnsWithoutDefault = []string{"uuid"}
-	childInformationColumnsWithDefault    = []string{"first_name", "last_name", "date_of_birth", "has_certificate", "created_at", "updated_at", "deleted_at", "parent_id"}
+	childInformationColumnsWithDefault    = []string{"first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts", "parent_id"}
 	childInformationPrimaryKeyColumns     = []string{"uuid"}
 	childInformationGeneratedColumns      = []string{}
 )
@@ -467,6 +467,7 @@ func (childInformationL) LoadParent(ctx context.Context, e boil.ContextExecutor,
 	query := NewQuery(
 		qm.From(`parent_information`),
 		qm.WhereIn(`parent_information.uuid in ?`, argsSlice...),
+		qmhelper.WhereIsNull(`parent_information.deleted_ts`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -576,6 +577,7 @@ func (childInformationL) LoadChildFlightInformations(ctx context.Context, e boil
 	query := NewQuery(
 		qm.From(`flight_information`),
 		qm.WhereIn(`flight_information.child_uuid in ?`, argsSlice...),
+		qmhelper.WhereIsNull(`flight_information.deleted_ts`),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -834,7 +836,7 @@ func (o *ChildInformation) RemoveChildFlightInformations(ctx context.Context, ex
 
 // ChildInformations retrieves all the records using an executor.
 func ChildInformations(mods ...qm.QueryMod) childInformationQuery {
-	mods = append(mods, qm.From("\"child_information\""))
+	mods = append(mods, qm.From("\"child_information\""), qmhelper.WhereIsNull("\"child_information\".\"deleted_ts\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
 		queries.SetSelect(q, []string{"\"child_information\".*"})
@@ -853,7 +855,7 @@ func FindChildInformation(ctx context.Context, exec boil.ContextExecutor, uUID s
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"child_information\" where \"uuid\"=$1", sel,
+		"select %s from \"child_information\" where \"uuid\"=$1 and \"deleted_ts\" is null", sel,
 	)
 
 	q := queries.Raw(query, uUID)
@@ -877,6 +879,16 @@ func (o *ChildInformation) Insert(ctx context.Context, exec boil.ContextExecutor
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if queries.MustTime(o.CreatedTS).IsZero() {
+			queries.SetScanner(&o.CreatedTS, currTime)
+		}
+		if queries.MustTime(o.UpdatedTS).IsZero() {
+			queries.SetScanner(&o.UpdatedTS, currTime)
+		}
+	}
 
 	nzDefaults := queries.NonZeroDefaultSet(childInformationColumnsWithDefault, o)
 
@@ -948,6 +960,12 @@ func (o *ChildInformation) Insert(ctx context.Context, exec boil.ContextExecutor
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *ChildInformation) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		queries.SetScanner(&o.UpdatedTS, currTime)
+	}
+
 	var err error
 	key := makeCacheKey(columns, nil)
 	childInformationUpdateCacheMut.RLock()
@@ -1075,6 +1093,14 @@ func (o *ChildInformation) Upsert(ctx context.Context, exec boil.ContextExecutor
 	if o == nil {
 		return errors.New("dbmodels: no child_information provided for upsert")
 	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if queries.MustTime(o.CreatedTS).IsZero() {
+			queries.SetScanner(&o.CreatedTS, currTime)
+		}
+		queries.SetScanner(&o.UpdatedTS, currTime)
+	}
 
 	nzDefaults := queries.NonZeroDefaultSet(childInformationColumnsWithDefault, o)
 
@@ -1189,13 +1215,31 @@ func (o *ChildInformation) Upsert(ctx context.Context, exec boil.ContextExecutor
 
 // Delete deletes a single ChildInformation record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *ChildInformation) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *ChildInformation) Delete(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if o == nil {
 		return 0, errors.New("dbmodels: no ChildInformation provided for delete")
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), childInformationPrimaryKeyMapping)
-	sql := "DELETE FROM \"child_information\" WHERE \"uuid\"=$1"
+	var (
+		sql  string
+		args []interface{}
+	)
+	if hardDelete {
+		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), childInformationPrimaryKeyMapping)
+		sql = "DELETE FROM \"child_information\" WHERE \"uuid\"=$1"
+	} else {
+		currTime := time.Now().In(boil.GetLocation())
+		o.DeletedTS = null.TimeFrom(currTime)
+		wl := []string{"deleted_ts"}
+		sql = fmt.Sprintf("UPDATE \"child_information\" SET %s WHERE \"uuid\"=$2",
+			strmangle.SetParamNames("\"", "\"", 1, wl),
+		)
+		valueMapping, err := queries.BindMapping(childInformationType, childInformationMapping, append(wl, childInformationPrimaryKeyColumns...))
+		if err != nil {
+			return 0, err
+		}
+		args = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), valueMapping)
+	}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1216,12 +1260,17 @@ func (o *ChildInformation) Delete(ctx context.Context, exec boil.ContextExecutor
 }
 
 // DeleteAll deletes all matching rows.
-func (q childInformationQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q childInformationQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if q.Query == nil {
 		return 0, errors.New("dbmodels: no childInformationQuery provided for delete all")
 	}
 
-	queries.SetDelete(q.Query)
+	if hardDelete {
+		queries.SetDelete(q.Query)
+	} else {
+		currTime := time.Now().In(boil.GetLocation())
+		queries.SetUpdate(q.Query, M{"deleted_ts": currTime})
+	}
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
@@ -1237,19 +1286,36 @@ func (q childInformationQuery) DeleteAll(ctx context.Context, exec boil.ContextE
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o ChildInformationSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o ChildInformationSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor, hardDelete bool) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	var args []interface{}
-	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), childInformationPrimaryKeyMapping)
-		args = append(args, pkeyArgs...)
+	var (
+		sql  string
+		args []interface{}
+	)
+	if hardDelete {
+		for _, obj := range o {
+			pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), childInformationPrimaryKeyMapping)
+			args = append(args, pkeyArgs...)
+		}
+		sql = "DELETE FROM \"child_information\" WHERE " +
+			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, childInformationPrimaryKeyColumns, len(o))
+	} else {
+		currTime := time.Now().In(boil.GetLocation())
+		for _, obj := range o {
+			pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), childInformationPrimaryKeyMapping)
+			args = append(args, pkeyArgs...)
+			obj.DeletedTS = null.TimeFrom(currTime)
+		}
+		wl := []string{"deleted_ts"}
+		sql = fmt.Sprintf("UPDATE \"child_information\" SET %s WHERE "+
+			strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 2, childInformationPrimaryKeyColumns, len(o)),
+			strmangle.SetParamNames("\"", "\"", 1, wl),
+		)
+		args = append([]interface{}{currTime}, args...)
 	}
-
-	sql := "DELETE FROM \"child_information\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, childInformationPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1296,7 +1362,8 @@ func (o *ChildInformationSlice) ReloadAll(ctx context.Context, exec boil.Context
 	}
 
 	sql := "SELECT \"child_information\".* FROM \"child_information\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, childInformationPrimaryKeyColumns, len(*o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, childInformationPrimaryKeyColumns, len(*o)) +
+		"and \"deleted_ts\" is null"
 
 	q := queries.Raw(sql, args...)
 
@@ -1313,7 +1380,7 @@ func (o *ChildInformationSlice) ReloadAll(ctx context.Context, exec boil.Context
 // ChildInformationExists checks if the ChildInformation row exists.
 func ChildInformationExists(ctx context.Context, exec boil.ContextExecutor, uUID string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"child_information\" where \"uuid\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"child_information\" where \"uuid\"=$1 and \"deleted_ts\" is null limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
