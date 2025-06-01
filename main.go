@@ -40,7 +40,7 @@ func main() {
 	fmt.Printf("successfully connected to %s", dbConfig.DbName)
 
 	pilotService := services.NewPilotService(dao.NewPilotDao(dbConn))
-	pilotEndpoints := endpoints.MakePilotEndpoints(pilotService)
+	pilotEndpoints := endpoints.NewPilotEndpoints(pilotService)
 	transport.PostPilotData(pilotEndpoints, v1Router)
 	transport.GetPilotData(pilotEndpoints, v1Router)
 	transport.PatchPilotData(pilotEndpoints, v1Router)
@@ -50,6 +50,10 @@ func main() {
 	transport.AddPlaneDatum(planesEndpoint, v1Router)
 	transport.DeletePlaneDatum(planesEndpoint, v1Router)
 	transport.ReinstatePlaneDatum(planesEndpoint, v1Router)
+
+	parentDemographicsService := services.NewParentService(dao.NewParentDao(dbConn))
+	parentEndpoint := endpoints.MakeParentEndpoints(parentDemographicsService)
+	transport.PostParentInformation(parentEndpoint, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
 
