@@ -15,7 +15,7 @@ type PilotEndpoints struct {
 	PatchPilotDataEndpoint endpoint.Endpoint
 }
 
-func MakePilotEndpoints(s services.PilotService) PilotEndpoints {
+func NewPilotEndpoints(s services.PilotService) PilotEndpoints {
 	return PilotEndpoints{
 		PostPilotEndpoint:      MakePostPilotEndpoint(s),
 		GetPilotDataEndpoint:   MakeGetPilotDataEndpoint(s),
