@@ -33,7 +33,7 @@ type ChildInformation struct {
 	CreatedTS      null.Time   `boil:"created_ts" json:"created_ts,omitempty" toml:"created_ts" yaml:"created_ts,omitempty"`
 	UpdatedTS      null.Time   `boil:"updated_ts" json:"updated_ts,omitempty" toml:"updated_ts" yaml:"updated_ts,omitempty"`
 	DeletedTS      null.Time   `boil:"deleted_ts" json:"deleted_ts,omitempty" toml:"deleted_ts" yaml:"deleted_ts,omitempty"`
-	ParentID       null.String `boil:"parent_id" json:"parent_id,omitempty" toml:"parent_id" yaml:"parent_id,omitempty"`
+	ParentID       string      `boil:"parent_id" json:"parent_id" toml:"parent_id" yaml:"parent_id"`
 
 	R *childInformationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L childInformationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -229,7 +229,7 @@ var ChildInformationWhere = struct {
 	CreatedTS      whereHelpernull_Time
 	UpdatedTS      whereHelpernull_Time
 	DeletedTS      whereHelpernull_Time
-	ParentID       whereHelpernull_String
+	ParentID       whereHelperstring
 }{
 	UUID:           whereHelperstring{field: "\"child_information\".\"uuid\""},
 	FirstName:      whereHelpernull_String{field: "\"child_information\".\"first_name\""},
@@ -239,7 +239,7 @@ var ChildInformationWhere = struct {
 	CreatedTS:      whereHelpernull_Time{field: "\"child_information\".\"created_ts\""},
 	UpdatedTS:      whereHelpernull_Time{field: "\"child_information\".\"updated_ts\""},
 	DeletedTS:      whereHelpernull_Time{field: "\"child_information\".\"deleted_ts\""},
-	ParentID:       whereHelpernull_String{field: "\"child_information\".\"parent_id\""},
+	ParentID:       whereHelperstring{field: "\"child_information\".\"parent_id\""},
 }
 
 // ChildInformationRels is where relationship names are stored.
@@ -281,8 +281,8 @@ type childInformationL struct{}
 
 var (
 	childInformationAllColumns            = []string{"uuid", "first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts", "parent_id"}
-	childInformationColumnsWithoutDefault = []string{"uuid"}
-	childInformationColumnsWithDefault    = []string{"first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts", "parent_id"}
+	childInformationColumnsWithoutDefault = []string{"uuid", "parent_id"}
+	childInformationColumnsWithDefault    = []string{"first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts"}
 	childInformationPrimaryKeyColumns     = []string{"uuid"}
 	childInformationGeneratedColumns      = []string{}
 )
@@ -436,9 +436,7 @@ func (childInformationL) LoadParent(ctx context.Context, e boil.ContextExecutor,
 		if object.R == nil {
 			object.R = &childInformationR{}
 		}
-		if !queries.IsNil(object.ParentID) {
-			args[object.ParentID] = struct{}{}
-		}
+		args[object.ParentID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -446,9 +444,7 @@ func (childInformationL) LoadParent(ctx context.Context, e boil.ContextExecutor,
 				obj.R = &childInformationR{}
 			}
 
-			if !queries.IsNil(obj.ParentID) {
-				args[obj.ParentID] = struct{}{}
-			}
+			args[obj.ParentID] = struct{}{}
 
 		}
 	}
@@ -506,7 +502,7 @@ func (childInformationL) LoadParent(ctx context.Context, e boil.ContextExecutor,
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.ParentID, foreign.UUID) {
+			if local.ParentID == foreign.UUID {
 				local.R.Parent = foreign
 				if foreign.R == nil {
 					foreign.R = &parentInformationR{}
@@ -654,7 +650,7 @@ func (o *ChildInformation) SetParent(ctx context.Context, exec boil.ContextExecu
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.ParentID, related.UUID)
+	o.ParentID = related.UUID
 	if o.R == nil {
 		o.R = &childInformationR{
 			Parent: related,
@@ -671,39 +667,6 @@ func (o *ChildInformation) SetParent(ctx context.Context, exec boil.ContextExecu
 		related.R.ParentChildInformations = append(related.R.ParentChildInformations, o)
 	}
 
-	return nil
-}
-
-// RemoveParent relationship.
-// Sets o.R.Parent to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *ChildInformation) RemoveParent(ctx context.Context, exec boil.ContextExecutor, related *ParentInformation) error {
-	var err error
-
-	queries.SetScanner(&o.ParentID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("parent_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Parent = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.ParentChildInformations {
-		if queries.Equal(o.ParentID, ri.ParentID) {
-			continue
-		}
-
-		ln := len(related.R.ParentChildInformations)
-		if ln > 1 && i < ln-1 {
-			related.R.ParentChildInformations[i] = related.R.ParentChildInformations[ln-1]
-		}
-		related.R.ParentChildInformations = related.R.ParentChildInformations[:ln-1]
-		break
-	}
 	return nil
 }
 

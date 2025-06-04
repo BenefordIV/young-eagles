@@ -10,14 +10,16 @@ import (
 )
 
 type ParentEndpoints struct {
-	PostParentEndpoint endpoint.Endpoint
-	GetParentEndpoint  endpoint.Endpoint
+	PostParentEndpoint              endpoint.Endpoint
+	GetParentEndpoint               endpoint.Endpoint
+	PostParentWithChildDataEndpoint endpoint.Endpoint
 }
 
 func MakeParentEndpoints(s services.ParentService) ParentEndpoints {
 	return ParentEndpoints{
-		PostParentEndpoint: MakePostParentEndpoint(s),
-		GetParentEndpoint:  MakeGetParentEndpoint(s),
+		PostParentEndpoint:              MakePostParentEndpoint(s),
+		GetParentEndpoint:               MakeGetParentEndpoint(s),
+		PostParentWithChildDataEndpoint: MakePostParentWithKidDataEndpoint(s),
 	}
 }
 
@@ -26,10 +28,7 @@ type PostParentRequest struct {
 }
 
 type PostParentRequestBody struct {
-	ParentFirstName   *string `json:"parentFirstName"`
-	ParentLastName    *string `json:"parentLastName"`
-	ParentEmail       *string `json:"parentEmail"`
-	ParentPhoneNumber string  `json:"parentPhoneNumber"`
+	Par models.Parent
 }
 
 type PostParentResponse struct {
@@ -47,7 +46,7 @@ func MakePostParentEndpoint(s services.ParentService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to PostParentRequest")
 		}
 
-		pM, err := s.PostParentData(ctx, *req.Body.ParentFirstName, *req.Body.ParentLastName, *req.Body.ParentEmail, req.Body.ParentPhoneNumber)
+		pM, err := s.PostParentData(ctx, req.Body.Par)
 		if err != nil {
 			return nil, err
 		}
@@ -82,5 +81,34 @@ func MakeGetParentEndpoint(s services.ParentService) endpoint.Endpoint {
 		}
 
 		return GetParentResponse{GetParentResponseBody{Parent: *pM}}, nil
+	}
+}
+
+type PostParentWithChildDataRequest struct {
+	Parent   models.Parent  `json:"parent"`
+	Children []models.Child `json:"children"`
+}
+
+type postParentWithChildDataResponse struct {
+	Body postParentWithChildDataResponseBody `json:"body"`
+}
+
+type postParentWithChildDataResponseBody struct {
+	Parent models.ParentWithChildren `json:"parent"`
+}
+
+func MakePostParentWithKidDataEndpoint(s services.ParentService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(PostParentWithChildDataRequest)
+		if !ok {
+			return nil, errors.New("cannot cast request to PostParentWithChildDataRequest")
+		}
+
+		pM, err := s.PostParentWithChildData(ctx, req.Parent, req.Children)
+		if err != nil {
+			return nil, err
+		}
+
+		return postParentWithChildDataResponse{postParentWithChildDataResponseBody{Parent: *pM}}, nil
 	}
 }

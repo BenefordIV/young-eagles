@@ -36,11 +36,11 @@ func decodePostParentDatum(ctx context.Context, request *http.Request) (interfac
 		return nil, errors.New("unable to unmarshal body")
 	}
 
-	if req.Body.ParentFirstName == nil || req.Body.ParentLastName == nil {
+	if req.Body.Par.FirstName == nil || req.Body.Par.LastName == nil {
 		return nil, errors.New("invalid request body: ParentFirstName and ParentLastName must not be empty")
 	}
 
-	if req.Body.ParentEmail == nil {
+	if req.Body.Par.Email == nil {
 		return nil, errors.New("invalid request body: ParentEmail must not be empty")
 	}
 
@@ -66,6 +66,41 @@ func decodeGetParentDatum(ctx context.Context, request *http.Request) (interface
 	if err != nil {
 		return nil, errors.New("invalid parent UUID format")
 	}
-	
+
 	return endpoints.GetParentRequest{ParentUUID: pUUID}, nil
+}
+
+func PostParentWithChildrenData(endpoint endpoints.ParentEndpoints, router *mux.Router) {
+	options := []httptransport.ServerOption{}
+
+	router.Handle(
+		"/pilot/addParentWithChildren",
+		httptransport.NewServer(
+			endpoint.PostParentWithChildDataEndpoint,
+			decodePostParentWithChildData,
+			encodeResponse,
+			options...,
+		)).Methods(http.MethodPost)
+}
+
+func decodePostParentWithChildData(ctx context.Context, request *http.Request) (interface{}, error) {
+	var req endpoints.PostParentWithChildDataRequest
+
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		return nil, errors.New("unable to read body")
+	}
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, errors.New("unable to unmarshal body")
+	}
+
+	if req.Parent.FirstName == nil || req.Parent.LastName == nil {
+		return nil, errors.New("invalid request body: ParentFirstName and ParentLastName must not be empty")
+	}
+
+	if req.Parent.Email == nil {
+		return nil, errors.New("invalid request body: ParentEmail must not be empty")
+	}
+	
+	return req, nil
 }

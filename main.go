@@ -51,9 +51,12 @@ func main() {
 	transport.DeletePlaneDatum(planesEndpoint, v1Router)
 	transport.ReinstatePlaneDatum(planesEndpoint, v1Router)
 
-	parentDemographicsService := services.NewParentService(dao.NewParentDao(dbConn))
+	childrenService := services.NewChildrenService(dao.NewChildrenDao(dbConn))
+
+	parentDemographicsService := services.NewParentService(dao.NewParentDao(dbConn), childrenService)
 	parentEndpoint := endpoints.MakeParentEndpoints(parentDemographicsService)
 	transport.PostParentInformation(parentEndpoint, v1Router)
+	transport.GetParentDatum(parentEndpoint, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
 
