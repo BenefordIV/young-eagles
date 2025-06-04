@@ -340,7 +340,7 @@ func (parentInformationL) LoadParentChildInformations(ctx context.Context, e boi
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if queries.Equal(local.UUID, foreign.ParentID) {
+			if local.UUID == foreign.ParentID {
 				local.R.ParentChildInformations = append(local.R.ParentChildInformations, foreign)
 				if foreign.R == nil {
 					foreign.R = &childInformationR{}
@@ -362,7 +362,7 @@ func (o *ParentInformation) AddParentChildInformations(ctx context.Context, exec
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.ParentID, o.UUID)
+			rel.ParentID = o.UUID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -383,7 +383,7 @@ func (o *ParentInformation) AddParentChildInformations(ctx context.Context, exec
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			queries.Assign(&rel.ParentID, o.UUID)
+			rel.ParentID = o.UUID
 		}
 	}
 
@@ -404,80 +404,6 @@ func (o *ParentInformation) AddParentChildInformations(ctx context.Context, exec
 			rel.R.Parent = o
 		}
 	}
-	return nil
-}
-
-// SetParentChildInformations removes all previously related items of the
-// parent_information replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Parent's ParentChildInformations accordingly.
-// Replaces o.R.ParentChildInformations with related.
-// Sets related.R.Parent's ParentChildInformations accordingly.
-func (o *ParentInformation) SetParentChildInformations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ChildInformation) error {
-	query := "update \"child_information\" set \"parent_id\" = null where \"parent_id\" = $1"
-	values := []interface{}{o.UUID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.ParentChildInformations {
-			queries.SetScanner(&rel.ParentID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.Parent = nil
-		}
-		o.R.ParentChildInformations = nil
-	}
-
-	return o.AddParentChildInformations(ctx, exec, insert, related...)
-}
-
-// RemoveParentChildInformations relationships from objects passed in.
-// Removes related items from R.ParentChildInformations (uses pointer comparison, removal does not keep order)
-// Sets related.R.Parent.
-func (o *ParentInformation) RemoveParentChildInformations(ctx context.Context, exec boil.ContextExecutor, related ...*ChildInformation) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.ParentID, nil)
-		if rel.R != nil {
-			rel.R.Parent = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("parent_id")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.ParentChildInformations {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.ParentChildInformations)
-			if ln > 1 && i < ln-1 {
-				o.R.ParentChildInformations[i] = o.R.ParentChildInformations[ln-1]
-			}
-			o.R.ParentChildInformations = o.R.ParentChildInformations[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 
