@@ -16,7 +16,7 @@ func PostParentInformation(endpoint endpoints.ParentEndpoints, router *mux.Route
 	options := []httptransport.ServerOption{}
 
 	router.Handle(
-		"/pilot/addParent",
+		"/parent/addParent",
 		httptransport.NewServer(
 			endpoint.PostParentEndpoint,
 			decodePostParentDatum,
@@ -25,22 +25,22 @@ func PostParentInformation(endpoint endpoints.ParentEndpoints, router *mux.Route
 		)).Methods(http.MethodPost)
 }
 
-func decodePostParentDatum(ctx context.Context, request *http.Request) (interface{}, error) {
-	var req endpoints.PostParentRequest
+func decodePostParentDatum(ctx context.Context, req *http.Request) (interface{}, error) {
+	var request endpoints.PostParentRequest
 
-	body, err := io.ReadAll(request.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, errors.New("unable to read body")
 	}
-	if err := json.Unmarshal(body, &request.Body); err != nil {
+	if err := json.Unmarshal(body, &request.Body.Par); err != nil {
 		return nil, errors.New("unable to unmarshal body")
 	}
 
-	if req.Body.Par.FirstName == nil || req.Body.Par.LastName == nil {
+	if request.Body.Par.FirstName == nil || request.Body.Par.LastName == nil {
 		return nil, errors.New("invalid request body: ParentFirstName and ParentLastName must not be empty")
 	}
 
-	if req.Body.Par.Email == nil {
+	if request.Body.Par.Email == nil {
 		return nil, errors.New("invalid request body: ParentEmail must not be empty")
 	}
 
@@ -50,7 +50,7 @@ func decodePostParentDatum(ctx context.Context, request *http.Request) (interfac
 func GetParentDatum(endpoint endpoints.ParentEndpoints, router *mux.Router) {
 	options := []httptransport.ServerOption{}
 
-	router.Handle("/pilot/getParent/%s/parentId",
+	router.Handle("/parent/getParent/%s/parentId",
 		httptransport.NewServer(
 			endpoint.GetParentEndpoint,
 			decodeGetParentDatum,
@@ -74,7 +74,7 @@ func PostParentWithChildrenData(endpoint endpoints.ParentEndpoints, router *mux.
 	options := []httptransport.ServerOption{}
 
 	router.Handle(
-		"/pilot/addParentWithChildren",
+		"/parent/addParentWithChildren",
 		httptransport.NewServer(
 			endpoint.PostParentWithChildDataEndpoint,
 			decodePostParentWithChildData,
@@ -101,6 +101,6 @@ func decodePostParentWithChildData(ctx context.Context, request *http.Request) (
 	if req.Parent.Email == nil {
 		return nil, errors.New("invalid request body: ParentEmail must not be empty")
 	}
-	
+
 	return req, nil
 }

@@ -57,6 +57,7 @@ func main() {
 	parentEndpoint := endpoints.MakeParentEndpoints(parentDemographicsService)
 	transport.PostParentInformation(parentEndpoint, v1Router)
 	transport.GetParentDatum(parentEndpoint, v1Router)
+	transport.PostParentWithChildrenData(parentEndpoint, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
 

@@ -41,12 +41,12 @@ type PostParentResponseBody struct {
 func MakePostParentEndpoint(s services.ParentService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 
-		req, ok := request.(PostParentRequest)
+		req, ok := request.(PostParentRequestBody)
 		if !ok {
 			return nil, errors.New("cannot cast request to PostParentRequest")
 		}
 
-		pM, err := s.PostParentData(ctx, req.Body.Par)
+		pM, err := s.PostParentData(ctx, req.Par)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +65,8 @@ type GetParentResponse struct {
 }
 
 type GetParentResponseBody struct {
-	Parent models.Parent `json:"parent"`
+	Parent   models.Parent  `json:"parent"`
+	Children []models.Child `json:"children"`
 }
 
 func MakeGetParentEndpoint(s services.ParentService) endpoint.Endpoint {
@@ -75,12 +76,12 @@ func MakeGetParentEndpoint(s services.ParentService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to GetParentRequest")
 		}
 
-		pM, err := s.GetParentData(ctx, req.ParentUUID)
+		pM, cM, err := s.GetParentData(ctx, req.ParentUUID)
 		if err != nil {
 			return nil, err
 		}
 
-		return GetParentResponse{GetParentResponseBody{Parent: *pM}}, nil
+		return GetParentResponse{GetParentResponseBody{Parent: *pM, Children: cM}}, nil
 	}
 }
 

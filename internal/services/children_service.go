@@ -2,12 +2,14 @@ package services
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"young-eagles/external/models"
 	"young-eagles/internal/dao"
 )
 
 type ChildrenService interface {
 	PostChildDatum(ctx context.Context, child models.Child) (*models.Child, error)
+	GetChildren(ctx context.Context, parentUuid uuid.UUID) ([]models.Child, error)
 }
 
 type childrenServiceImpl struct {
@@ -29,4 +31,18 @@ func (c childrenServiceImpl) PostChildDatum(ctx context.Context, child models.Ch
 	}
 
 	return models.ChildFromDb(*childDb), nil
+}
+
+func (c childrenServiceImpl) GetChildren(ctx context.Context, parentUuid uuid.UUID) ([]models.Child, error) {
+	children, err := c.childDao.GetChildrenByParentID(ctx, parentUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	cM := make([]models.Child, len(children))
+	for i, child := range children {
+		cM[i] = *models.ChildFromDb(*child)
+	}
+
+	return cM, nil
 }

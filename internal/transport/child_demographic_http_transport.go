@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -18,4 +19,8 @@ func PostChildInformation(endpoint endpoints.ChildEndpoints, router *mux.Router)
 			encodeResponse,
 			options...,
 		)).Methods(http.MethodPost)
+}
+
+func decodePostChildDatum(_ context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
 }

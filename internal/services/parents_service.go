@@ -10,7 +10,7 @@ import (
 
 type ParentService interface {
 	PostParentData(ctx context.Context, parent models.Parent) (*models.Parent, error)
-	GetParentData(ctx context.Context, parentUUID uuid.UUID) (*models.Parent, error)
+	GetParentData(ctx context.Context, parentUUID uuid.UUID) (*models.Parent, []models.Child, error)
 	PostParentWithChildData(ctx context.Context, parent models.Parent, kid []models.Child) (*models.ParentWithChildren, error)
 }
 
@@ -45,19 +45,24 @@ func (p parentServiceImpl) PostParentData(ctx context.Context, parent models.Par
 	return pM, nil
 }
 
-func (p parentServiceImpl) GetParentData(ctx context.Context, parentUUID uuid.UUID) (*models.Parent, error) {
+func (p parentServiceImpl) GetParentData(ctx context.Context, parentUUID uuid.UUID) (*models.Parent, []models.Child, error) {
 	par, err := p.parentDao.GetParentByID(ctx, parentUUID.String())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get parent data")
+		return nil, nil, errors.Wrap(err, "failed to get parent data")
 	}
 
 	if par == nil {
-		return nil, errors.New("parent not found")
+		return nil, nil, errors.New("parent not found")
 	}
 
 	pM := models.ParentFromDb(*par)
 
-	return pM, nil
+	cM, err := p.childService.GetChildren(ctx, parentUUID)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to get children")
+	}
+
+	return pM, cM, nil
 }
 
 func (p parentServiceImpl) PostParentWithChildData(ctx context.Context, parent models.Parent, kid []models.Child) (*models.ParentWithChildren, error) {
