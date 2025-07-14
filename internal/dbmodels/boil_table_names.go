@@ -6,13 +6,11 @@ package dbmodels
 var TableNames = struct {
 	ChildInformation  string
 	FlightInformation string
-	ParentInformation string
 	PilotData         string
 	PlaneInformation  string
 }{
 	ChildInformation:  "child_information",
 	FlightInformation: "flight_information",
-	ParentInformation: "parent_information",
 	PilotData:         "pilot_data",
 	PlaneInformation:  "plane_information",
 }

@@ -244,29 +244,19 @@ var ChildInformationWhere = struct {
 
 // ChildInformationRels is where relationship names are stored.
 var ChildInformationRels = struct {
-	Parent                  string
 	ChildFlightInformations string
 }{
-	Parent:                  "Parent",
 	ChildFlightInformations: "ChildFlightInformations",
 }
 
 // childInformationR is where relationships are stored.
 type childInformationR struct {
-	Parent                  *ParentInformation     `boil:"Parent" json:"Parent" toml:"Parent" yaml:"Parent"`
 	ChildFlightInformations FlightInformationSlice `boil:"ChildFlightInformations" json:"ChildFlightInformations" toml:"ChildFlightInformations" yaml:"ChildFlightInformations"`
 }
 
 // NewStruct creates a new relationship struct
 func (*childInformationR) NewStruct() *childInformationR {
 	return &childInformationR{}
-}
-
-func (r *childInformationR) GetParent() *ParentInformation {
-	if r == nil {
-		return nil
-	}
-	return r.Parent
 }
 
 func (r *childInformationR) GetChildFlightInformations() FlightInformationSlice {
@@ -378,17 +368,6 @@ func (q childInformationQuery) Exists(ctx context.Context, exec boil.ContextExec
 	return count > 0, nil
 }
 
-// Parent pointed to by the foreign key.
-func (o *ChildInformation) Parent(mods ...qm.QueryMod) parentInformationQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"uuid\" = ?", o.ParentID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return ParentInformations(queryMods...)
-}
-
 // ChildFlightInformations retrieves all the flight_information's FlightInformations with an executor via child_uuid column.
 func (o *ChildInformation) ChildFlightInformations(mods ...qm.QueryMod) flightInformationQuery {
 	var queryMods []qm.QueryMod
@@ -401,119 +380,6 @@ func (o *ChildInformation) ChildFlightInformations(mods ...qm.QueryMod) flightIn
 	)
 
 	return FlightInformations(queryMods...)
-}
-
-// LoadParent allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (childInformationL) LoadParent(ctx context.Context, e boil.ContextExecutor, singular bool, maybeChildInformation interface{}, mods queries.Applicator) error {
-	var slice []*ChildInformation
-	var object *ChildInformation
-
-	if singular {
-		var ok bool
-		object, ok = maybeChildInformation.(*ChildInformation)
-		if !ok {
-			object = new(ChildInformation)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeChildInformation)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeChildInformation))
-			}
-		}
-	} else {
-		s, ok := maybeChildInformation.(*[]*ChildInformation)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeChildInformation)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeChildInformation))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &childInformationR{}
-		}
-		args[object.ParentID] = struct{}{}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &childInformationR{}
-			}
-
-			args[obj.ParentID] = struct{}{}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`parent_information`),
-		qm.WhereIn(`parent_information.uuid in ?`, argsSlice...),
-		qmhelper.WhereIsNull(`parent_information.deleted_ts`),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load ParentInformation")
-	}
-
-	var resultSlice []*ParentInformation
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice ParentInformation")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for parent_information")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for parent_information")
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.Parent = foreign
-		if foreign.R == nil {
-			foreign.R = &parentInformationR{}
-		}
-		foreign.R.ParentChildInformations = append(foreign.R.ParentChildInformations, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.ParentID == foreign.UUID {
-				local.R.Parent = foreign
-				if foreign.R == nil {
-					foreign.R = &parentInformationR{}
-				}
-				foreign.R.ParentChildInformations = append(foreign.R.ParentChildInformations, local)
-				break
-			}
-		}
-	}
-
-	return nil
 }
 
 // LoadChildFlightInformations allows an eager lookup of values, cached into the
@@ -618,53 +484,6 @@ func (childInformationL) LoadChildFlightInformations(ctx context.Context, e boil
 				break
 			}
 		}
-	}
-
-	return nil
-}
-
-// SetParent of the childInformation to the related item.
-// Sets o.R.Parent to related.
-// Adds o to related.R.ParentChildInformations.
-func (o *ChildInformation) SetParent(ctx context.Context, exec boil.ContextExecutor, insert bool, related *ParentInformation) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"child_information\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"parent_id"}),
-		strmangle.WhereClause("\"", "\"", 2, childInformationPrimaryKeyColumns),
-	)
-	values := []interface{}{related.UUID, o.UUID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.ParentID = related.UUID
-	if o.R == nil {
-		o.R = &childInformationR{
-			Parent: related,
-		}
-	} else {
-		o.R.Parent = related
-	}
-
-	if related.R == nil {
-		related.R = &parentInformationR{
-			ParentChildInformations: ChildInformationSlice{o},
-		}
-	} else {
-		related.R.ParentChildInformations = append(related.R.ParentChildInformations, o)
 	}
 
 	return nil
