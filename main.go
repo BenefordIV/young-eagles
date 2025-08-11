@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	config.LoadConfig(config.GetAppEnvLocation())
+	config.LoadConfig()
 
 	dbConfig := dao.DbConfig{
 		DbName: config.GetDbName(),
@@ -39,6 +39,7 @@ func main() {
 	}
 	fmt.Printf("successfully connected to %s", dbConfig.DbName)
 
+	fmt.Println("setting up endpoints")
 	pilotService := services.NewPilotService(dao.NewPilotDao(dbConn))
 	pilotEndpoints := endpoints.NewPilotEndpoints(pilotService)
 	transport.PostPilotData(pilotEndpoints, v1Router)
@@ -55,12 +56,16 @@ func main() {
 
 	port := fmt.Sprintf(":%s", "8080")
 
+	fmt.Println("setting up server on port " + port)
+
 	srv := &http.Server{
 		Addr:         port,
 		Handler:      router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
+
+	fmt.Println("starting server on " + srv.Addr)
 
 	err = srv.ListenAndServe()
 	if err != nil {
