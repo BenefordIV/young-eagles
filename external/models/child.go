@@ -12,7 +12,6 @@ type Child struct {
 	FirstName      string    `json:"firstName"`
 	LastName       string    `json:"lastName"`
 	DateOfBirth    string    `json:"dateOfBirth"`
-	ParentUUID     uuid.UUID `json:"parentUUID"`
 	HasCertificate bool      `json:"hasCertificate"`
 }
 
@@ -22,7 +21,6 @@ func ChildFromDb(datum dbmodels.ChildInformation) *Child {
 		FirstName:      datum.FirstName.String,
 		LastName:       datum.LastName.String,
 		DateOfBirth:    datum.DateOfBirth.Time.String(),
-		ParentUUID:     uuid.MustParse(datum.ParentID),
 		HasCertificate: datum.HasCertificate.Bool,
 	}
 }
@@ -33,11 +31,9 @@ func (c *Child) ToDbModel() dbmodels.ChildInformation {
 		return dbmodels.ChildInformation{}
 	}
 	return dbmodels.ChildInformation{
-		UUID:           c.UUID.String(),
 		FirstName:      null.StringFrom(c.FirstName),
 		LastName:       null.StringFrom(c.LastName),
 		DateOfBirth:    null.TimeFrom(dob),
-		ParentID:       c.ParentUUID.String(),
 		HasCertificate: null.BoolFrom(c.HasCertificate),
 	}
 }

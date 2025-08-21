@@ -4,17 +4,20 @@ import (
 	"context"
 	"errors"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/google/uuid"
 	"young-eagles/external/models"
 	"young-eagles/internal/services"
 )
 
 type ChildEndpoints struct {
 	PostChildEndpoint endpoint.Endpoint
+	GetChildEndpoint  endpoint.Endpoint
 }
 
-func MakeChildEndpoints(s services.ChildrenService) ChildEndpoints {
+func NewChildEndpoints(s services.ChildrenService) ChildEndpoints {
 	return ChildEndpoints{
 		PostChildEndpoint: MakePostChildEndpoint(s),
+		GetChildEndpoint:  MakeGetChildEndpoint(s),
 	}
 }
 
@@ -47,5 +50,31 @@ func MakePostChildEndpoint(s services.ChildrenService) endpoint.Endpoint {
 		}
 
 		return postChildResponse{Body: PostChildResponseBody{Child: *child}}, nil
+	}
+}
+
+type ChildGetRequest struct {
+	ChildUUID uuid.UUID `json:"childUUID"`
+}
+
+type getChildResponse struct {
+	Body childResponse
+}
+
+type childResponse struct {
+	Child models.Child `json:"child"`
+}
+
+func MakeGetChildEndpoint(s services.ChildrenService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(ChildGetRequest)
+		if !ok {
+			return nil, errors.New("cannot cast request to ChildGetRequest")
+		}
+		c, err := s.GetChildByUUID(ctx, req.ChildUUID.String())
+		if err != nil {
+			return nil, err
+		}
+		return getChildResponse{Body: childResponse{Child: *c}}, nil
 	}
 }

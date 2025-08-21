@@ -33,7 +33,6 @@ type ChildInformation struct {
 	CreatedTS      null.Time   `boil:"created_ts" json:"created_ts,omitempty" toml:"created_ts" yaml:"created_ts,omitempty"`
 	UpdatedTS      null.Time   `boil:"updated_ts" json:"updated_ts,omitempty" toml:"updated_ts" yaml:"updated_ts,omitempty"`
 	DeletedTS      null.Time   `boil:"deleted_ts" json:"deleted_ts,omitempty" toml:"deleted_ts" yaml:"deleted_ts,omitempty"`
-	ParentID       string      `boil:"parent_id" json:"parent_id" toml:"parent_id" yaml:"parent_id"`
 
 	R *childInformationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L childInformationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,7 +47,6 @@ var ChildInformationColumns = struct {
 	CreatedTS      string
 	UpdatedTS      string
 	DeletedTS      string
-	ParentID       string
 }{
 	UUID:           "uuid",
 	FirstName:      "first_name",
@@ -58,7 +56,6 @@ var ChildInformationColumns = struct {
 	CreatedTS:      "created_ts",
 	UpdatedTS:      "updated_ts",
 	DeletedTS:      "deleted_ts",
-	ParentID:       "parent_id",
 }
 
 var ChildInformationTableColumns = struct {
@@ -70,7 +67,6 @@ var ChildInformationTableColumns = struct {
 	CreatedTS      string
 	UpdatedTS      string
 	DeletedTS      string
-	ParentID       string
 }{
 	UUID:           "child_information.uuid",
 	FirstName:      "child_information.first_name",
@@ -80,7 +76,6 @@ var ChildInformationTableColumns = struct {
 	CreatedTS:      "child_information.created_ts",
 	UpdatedTS:      "child_information.updated_ts",
 	DeletedTS:      "child_information.deleted_ts",
-	ParentID:       "child_information.parent_id",
 }
 
 // Generated where
@@ -229,7 +224,6 @@ var ChildInformationWhere = struct {
 	CreatedTS      whereHelpernull_Time
 	UpdatedTS      whereHelpernull_Time
 	DeletedTS      whereHelpernull_Time
-	ParentID       whereHelperstring
 }{
 	UUID:           whereHelperstring{field: "\"child_information\".\"uuid\""},
 	FirstName:      whereHelpernull_String{field: "\"child_information\".\"first_name\""},
@@ -239,7 +233,6 @@ var ChildInformationWhere = struct {
 	CreatedTS:      whereHelpernull_Time{field: "\"child_information\".\"created_ts\""},
 	UpdatedTS:      whereHelpernull_Time{field: "\"child_information\".\"updated_ts\""},
 	DeletedTS:      whereHelpernull_Time{field: "\"child_information\".\"deleted_ts\""},
-	ParentID:       whereHelperstring{field: "\"child_information\".\"parent_id\""},
 }
 
 // ChildInformationRels is where relationship names are stored.
@@ -270,9 +263,9 @@ func (r *childInformationR) GetChildFlightInformations() FlightInformationSlice 
 type childInformationL struct{}
 
 var (
-	childInformationAllColumns            = []string{"uuid", "first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts", "parent_id"}
-	childInformationColumnsWithoutDefault = []string{"uuid", "parent_id"}
-	childInformationColumnsWithDefault    = []string{"first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts"}
+	childInformationAllColumns            = []string{"uuid", "first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts"}
+	childInformationColumnsWithoutDefault = []string{}
+	childInformationColumnsWithDefault    = []string{"uuid", "first_name", "last_name", "date_of_birth", "has_certificate", "created_ts", "updated_ts", "deleted_ts"}
 	childInformationPrimaryKeyColumns     = []string{"uuid"}
 	childInformationGeneratedColumns      = []string{}
 )
