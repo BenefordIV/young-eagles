@@ -26,7 +26,7 @@ func NewPilotDao(conn DbConnection) PilotDao {
 
 func (p pilotDaoImpl) AddPilot(ctx context.Context, pilot dbmodels.PilotDatum) (*dbmodels.PilotDatum, error) {
 	log.Println("adding pilot to database")
-
+	log.Println(pilot.UUID)
 	err := pilot.Insert(ctx, p.dbConn.DbConn, boil.Blacklist(dbmodels.PilotDatumColumns.DeletedTS,
 		dbmodels.PilotDatumColumns.UpdatedAt))
 	if err != nil {

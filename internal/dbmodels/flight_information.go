@@ -152,8 +152,8 @@ type flightInformationL struct{}
 
 var (
 	flightInformationAllColumns            = []string{"uuid", "created_ts", "updated_ts", "deleted_ts", "status", "pilot_uuid", "child_uuid", "plane_call_number"}
-	flightInformationColumnsWithoutDefault = []string{"uuid", "pilot_uuid"}
-	flightInformationColumnsWithDefault    = []string{"created_ts", "updated_ts", "deleted_ts", "status", "child_uuid", "plane_call_number"}
+	flightInformationColumnsWithoutDefault = []string{"pilot_uuid"}
+	flightInformationColumnsWithDefault    = []string{"uuid", "created_ts", "updated_ts", "deleted_ts", "status", "child_uuid", "plane_call_number"}
 	flightInformationPrimaryKeyColumns     = []string{"uuid"}
 	flightInformationGeneratedColumns      = []string{}
 )

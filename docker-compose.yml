@@ -1,0 +1,17 @@
+services:
+  young-eagles:
+    build:
+      context: ./
+      dockerfile: young-eagles.dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      - DB_NAME=young_eagles_developer
+      - DB_HOST=young-eagle-developer.cxwcc8oqmytb.us-east-1.rds.amazonaws.com
+      - DB_PORT=5432
+      - DB_PASS=3dgeL0rd?!?
+      - DB_USER=ye_admin

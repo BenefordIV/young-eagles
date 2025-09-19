@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	config.LoadConfig(config.GetAppEnvLocation())
+	config.LoadConfig()
 
 	dbConfig := dao.DbConfig{
 		DbName: config.GetDbName(),
@@ -39,6 +39,7 @@ func main() {
 	}
 	fmt.Printf("successfully connected to %s", dbConfig.DbName)
 
+	fmt.Println("setting up endpoints")
 	pilotService := services.NewPilotService(dao.NewPilotDao(dbConn))
 	pilotEndpoints := endpoints.NewPilotEndpoints(pilotService)
 	transport.PostPilotData(pilotEndpoints, v1Router)
@@ -52,13 +53,13 @@ func main() {
 	transport.ReinstatePlaneDatum(planesEndpoint, v1Router)
 
 	childrenService := services.NewChildrenService(dao.NewChildrenDao(dbConn))
-
-	parentDemographicsService := services.NewParentService(dao.NewParentDao(dbConn), childrenService)
-	parentEndpoint := endpoints.MakeParentEndpoints(parentDemographicsService)
-	transport.PostParentInformation(parentEndpoint, v1Router)
-	transport.GetParentDatum(parentEndpoint, v1Router)
+	childrenEndpoints := endpoints.NewChildEndpoints(childrenService)
+	transport.PostChildInformation(childrenEndpoints, v1Router)
+	transport.GetChildInformation(childrenEndpoints, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
+
+	fmt.Println("setting up server on port " + port)
 
 	srv := &http.Server{
 		Addr:         port,
@@ -66,6 +67,8 @@ func main() {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
+
+	fmt.Println("starting server on " + srv.Addr)
 
 	err = srv.ListenAndServe()
 	if err != nil {
