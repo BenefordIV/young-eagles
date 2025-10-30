@@ -13,6 +13,7 @@ import (
 
 type FlightService interface {
 	PostFlight(ctx context.Context, pilot models.Pilot, child models.Child, plane models.Plane) (*models.Flight, error)
+	PatchFlightFinished(ctx context.Context, flightUUID uuid.UUID) error
 }
 
 type flightServiceImpl struct {
@@ -55,4 +56,9 @@ func (f flightServiceImpl) PostFlight(ctx context.Context, pilot models.Pilot, c
 		Status:    models.FlightStatus(flightDB.Status.String),
 	}
 	return &flight, nil
+}
+
+func (f flightServiceImpl) PatchFlightFinished(ctx context.Context, flightUUID uuid.UUID) error {
+
+	return nil
 }

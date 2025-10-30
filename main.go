@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"time"
@@ -11,6 +10,8 @@ import (
 	"young-eagles/internal/endpoints"
 	"young-eagles/internal/services"
 	"young-eagles/internal/transport"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -56,6 +57,11 @@ func main() {
 	childrenEndpoints := endpoints.NewChildEndpoints(childrenService)
 	transport.PostChildInformation(childrenEndpoints, v1Router)
 	transport.GetChildInformation(childrenEndpoints, v1Router)
+
+	flightService := services.NewFlightService(dao.NewFlightDao(dbConn), dao.NewPilotDao(dbConn), dao.NewChildrenDao(dbConn))
+	flightEndpoints := endpoints.MakeFlightEndpoints(flightService)
+	transport.PostFlightData(flightEndpoints, v1Router)
+	transport.PatchFlightCompleted(flightEndpoints, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
 

@@ -7,15 +7,18 @@ import (
 	"young-eagles/internal/services"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/google/uuid"
 )
 
 type FlightEndpoints struct {
-	PostFlightEndpoint endpoint.Endpoint
+	PostFlightEndpoint           endpoint.Endpoint
+	PatchFlightCompletedEndpoint endpoint.Endpoint
 }
 
 func MakeFlightEndpoints(s services.FlightService) FlightEndpoints {
 	return FlightEndpoints{
-		PostFlightEndpoint: MakePostFlightEndpoint(s),
+		PostFlightEndpoint:           MakePostFlightEndpoint(s),
+		PatchFlightCompletedEndpoint: MakePatchFlightCompletedEndpoint(s),
 	}
 }
 
@@ -50,5 +53,29 @@ func MakePostFlightEndpoint(s services.FlightService) endpoint.Endpoint {
 		}
 
 		return postFlightResponse{PostFlightResponseBody{Flight: *flight}}, nil
+	}
+}
+
+type PatchFlightCompletedRequest struct {
+	FlightUUID uuid.UUID `json:"flightUUID"`
+}
+
+type patchFLightCompletedResponse struct {
+	Body emptyResponse
+}
+
+func MakePatchFlightCompletedEndpoint(s services.FlightService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(PatchFlightCompletedRequest)
+		if !ok {
+			return nil, errors.New("cannot cast request to PatchFlightCompletedRequest")
+		}
+
+		err := s.PatchFlightFinished(ctx, req.FlightUUID)
+		if err != nil {
+			return nil, err
+		}
+
+		return patchFLightCompletedResponse{Body: emptyResponse{}}, nil
 	}
 }
