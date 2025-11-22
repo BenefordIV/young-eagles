@@ -13,12 +13,14 @@ import (
 type FlightEndpoints struct {
 	PostFlightEndpoint           endpoint.Endpoint
 	PatchFlightCompletedEndpoint endpoint.Endpoint
+	GetFlightDataEndpoint        endpoint.Endpoint
 }
 
 func MakeFlightEndpoints(s services.FlightService) FlightEndpoints {
 	return FlightEndpoints{
 		PostFlightEndpoint:           MakePostFlightEndpoint(s),
 		PatchFlightCompletedEndpoint: MakePatchFlightCompletedEndpoint(s),
+		GetFlightDataEndpoint:        MakeGetFlightDataEndpoint(s),
 	}
 }
 
@@ -71,11 +73,39 @@ func MakePatchFlightCompletedEndpoint(s services.FlightService) endpoint.Endpoin
 			return nil, errors.New("cannot cast request to PatchFlightCompletedRequest")
 		}
 
-		err := s.PatchFlightFinished(ctx, req.FlightUUID)
+		err := s.CompleteFlight(ctx, req.FlightUUID)
 		if err != nil {
 			return nil, err
 		}
 
 		return patchFLightCompletedResponse{Body: emptyResponse{}}, nil
+	}
+}
+
+type GetFlightRequest struct {
+	FlightUUID uuid.UUID
+}
+
+type getFlightResponse struct {
+	Body getFlightResponseBody
+}
+
+type getFlightResponseBody struct {
+	Flight models.Flight
+}
+
+func MakeGetFlightDataEndpoint(s services.FlightService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(GetFlightRequest)
+		if !ok {
+			return nil, errors.New("cannot cast request to GetFlightRequest")
+		}
+
+		flight, err := s.GetFlight(ctx, req.FlightUUID)
+		if err != nil {
+			return nil, err
+		}
+
+		return getFlightResponse{getFlightResponseBody{Flight: *flight}}, nil
 	}
 }

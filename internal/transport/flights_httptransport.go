@@ -67,3 +67,26 @@ func decodePatchFlightCompletedRequest(_ context.Context, req *http.Request) (in
 	r.FlightUUID = id
 	return r, nil
 }
+
+func GetFlightData(endpoint endpoints.FlightEndpoints, router *mux.Router) {
+	options := []httptransport.ServerOption{}
+	router.Handle(
+		"/flights/{uuid}",
+		httptransport.NewServer(
+			endpoint.GetFlightDataEndpoint,
+			decodeGetFlightData,
+			encodeResponse,
+			options...),
+	).Methods(http.MethodGet)
+}
+
+func decodeGetFlightData(_ context.Context, req *http.Request) (interface{}, error) {
+	var r endpoints.GetFlightRequest
+	vars := mux.Vars(req)
+	id, err := uuid.Parse(vars["uuid"])
+	if err != nil {
+		return nil, errors.New("invalid flight uuid")
+	}
+	r.FlightUUID = id
+	return r, nil
+}

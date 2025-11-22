@@ -13,7 +13,8 @@ import (
 
 type FlightService interface {
 	PostFlight(ctx context.Context, pilot models.Pilot, child models.Child, plane models.Plane) (*models.Flight, error)
-	PatchFlightFinished(ctx context.Context, flightUUID uuid.UUID) error
+	CompleteFlight(ctx context.Context, flightUUID uuid.UUID) error
+	GetFlight(ctx context.Context, flightUUID uuid.UUID) (*models.Flight, error)
 }
 
 type flightServiceImpl struct {
@@ -44,21 +45,36 @@ func (f flightServiceImpl) PostFlight(ctx context.Context, pilot models.Pilot, c
 		PlaneCallNumber: null.StringFrom(plane.CallNumber),
 	}
 
-	flightDB, err := f.flightDao.PutFlightDatum(ctx, fDBModel)
+	flight, err := f.flightDao.UpdateFlightDatum(ctx, fDBModel)
 	if err != nil {
 		return nil, err
 	}
 
-	flight := models.Flight{
-		UUID:      uuid.MustParse(flightDB.UUID),
-		PilotUUID: uuid.MustParse(flightDB.PilotUUID),
-		ChildUUID: uuid.MustParse(flightDB.ChildUUID.String),
-		Status:    models.FlightStatus(flightDB.Status.String),
-	}
-	return &flight, nil
+	return flight, nil
 }
 
-func (f flightServiceImpl) PatchFlightFinished(ctx context.Context, flightUUID uuid.UUID) error {
+func (f flightServiceImpl) CompleteFlight(ctx context.Context, flightUUID uuid.UUID) error {
+	fDbModel := dbmodels.FlightInformation{
+		Status: null.StringFrom(models.Ended.String()),
+		UUID:   flightUUID.String(),
+	}
 
+	_, err := f.flightDao.PutFlightDatum(ctx, fDbModel)
+
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (f flightServiceImpl) GetFlight(ctx context.Context, flightUUID uuid.UUID) (*models.Flight, error) {
+	flightDb, err := f.flightDao.GetFlightData(ctx, flightUUID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	flight := models.FlightFromDB(*flightDb)
+
+	return &flight, nil
 }

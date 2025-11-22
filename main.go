@@ -62,6 +62,7 @@ func main() {
 	flightEndpoints := endpoints.MakeFlightEndpoints(flightService)
 	transport.PostFlightData(flightEndpoints, v1Router)
 	transport.PatchFlightCompleted(flightEndpoints, v1Router)
+	transport.GetFlightData(flightEndpoints, v1Router)
 
 	port := fmt.Sprintf(":%s", "8080")
 

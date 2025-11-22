@@ -1,6 +1,10 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"young-eagles/internal/dbmodels"
+
+	"github.com/google/uuid"
+)
 
 type Flight struct {
 	UUID      uuid.UUID
@@ -26,5 +30,14 @@ func (f FlightStatus) valid() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func FlightFromDB(datum dbmodels.FlightInformation) Flight {
+	return Flight{
+		UUID:      uuid.MustParse(datum.UUID),
+		PilotUUID: uuid.MustParse(datum.PilotUUID),
+		ChildUUID: uuid.MustParse(datum.ChildUUID.String),
+		Status:    FlightStatus(datum.Status.String),
 	}
 }
