@@ -1,0 +1,29 @@
+psql:
+  dsn: "postgres://ye_admin:young_eagles@localhost:5432/young_eagles?sslmode=disable"
+  output: "gen/models"
+  except:
+    schema_migrations:
+no_tests: true
+plugins:
+  enums:
+    disabled: false
+    destination: "gen/models/enums"
+    pkgname: "enums"
+  models:
+    disabled: false
+    destination: "gen/models"
+    pkgname: "models"
+  factory:
+    disabled: false
+    destination: "gen/models/factory"
+    pkgname: "factory"
+  dberrors:
+    disabled: false
+    pkgname: dberrors
+    destination: "gen/models/dberrors"
+  dbinfo:
+    disabled: false
+    pkgname: "dbinfo"
+    destination: "gen/models/dbinfo"
+  where:
+    disabled: false

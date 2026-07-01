@@ -3,10 +3,11 @@ package endpoints
 import (
 	"context"
 	"errors"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/google/uuid"
 	"young-eagles/external/models"
 	"young-eagles/internal/services"
+
+	"github.com/go-kit/kit/endpoint"
+	"github.com/gofrs/uuid/v5"
 )
 
 type ChildEndpoints struct {
@@ -71,7 +72,7 @@ func MakeGetChildEndpoint(s services.ChildrenService) endpoint.Endpoint {
 		if !ok {
 			return nil, errors.New("cannot cast request to ChildGetRequest")
 		}
-		c, err := s.GetChildByUUID(ctx, req.ChildUUID.String())
+		c, err := s.GetChildByUUID(ctx, req.ChildUUID)
 		if err != nil {
 			return nil, err
 		}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"time"
@@ -11,6 +10,9 @@ import (
 	"young-eagles/internal/endpoints"
 	"young-eagles/internal/services"
 	"young-eagles/internal/transport"
+
+	"github.com/gorilla/mux"
+	"github.com/stephenafamo/bob"
 )
 
 func main() {
@@ -39,20 +41,22 @@ func main() {
 	}
 	fmt.Printf("successfully connected to %s", dbConfig.DbName)
 
+	bdb := bob.NewDB(dbConn.DbConn)
+
 	fmt.Println("setting up endpoints")
-	pilotService := services.NewPilotService(dao.NewPilotDao(dbConn))
+	pilotService := services.NewPilotService(dao.NewPilotDao(bdb))
 	pilotEndpoints := endpoints.NewPilotEndpoints(pilotService)
 	transport.PostPilotData(pilotEndpoints, v1Router)
 	transport.GetPilotData(pilotEndpoints, v1Router)
 	transport.PatchPilotData(pilotEndpoints, v1Router)
 
-	planesService := services.MakePlanesService(dao.NewPlaneDao(dbConn))
+	planesService := services.MakePlanesService(dao.NewPlaneDao(bdb))
 	planesEndpoint := endpoints.MakePlaneEndpoints(planesService)
 	transport.AddPlaneDatum(planesEndpoint, v1Router)
 	transport.DeletePlaneDatum(planesEndpoint, v1Router)
 	transport.ReinstatePlaneDatum(planesEndpoint, v1Router)
 
-	childrenService := services.NewChildrenService(dao.NewChildrenDao(dbConn))
+	childrenService := services.NewChildrenService(dao.NewChildrenDao(bdb))
 	childrenEndpoints := endpoints.NewChildEndpoints(childrenService)
 	transport.PostChildInformation(childrenEndpoints, v1Router)
 	transport.GetChildInformation(childrenEndpoints, v1Router)

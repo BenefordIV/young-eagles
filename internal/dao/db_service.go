@@ -3,8 +3,9 @@ package dao
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type sslModes string
@@ -33,7 +34,7 @@ const (
 	maxIdleConn    = 10
 	maxIdleDbConn  = 5
 	maxDbLifetime  = 5 * time.Minute
-	defaultSslMode = "require"
+	defaultSslMode = "disable"
 )
 
 var db *sql.DB

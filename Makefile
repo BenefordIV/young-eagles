@@ -12,11 +12,6 @@ test:
 clean:
 	rm -f bin/app
 
-code-gen-db:
-	sqlboiler psql
-	findstr /rl "DeletedAt" internal/dbmodels | xargs sed /i = "" 's/DeletedAt/DeletedTS/g'
-	findstr /rl "deleted_at" internal/dbmodels | xargs sed /i = "" 's/deleted_at/deleted_ts/g'
-
 run:
 	go run ./.
 
@@ -36,3 +31,6 @@ down:
 	@echo stopping the docker images...
 	docker-compose down
 	@echo docker images stopped
+
+bob: ## Generate DAO models
+	go run github.com/stephenafamo/bob/gen/bobgen-psql@latest -c ./bobgen.yaml
