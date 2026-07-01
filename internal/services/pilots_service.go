@@ -2,14 +2,17 @@ package services
 
 import (
 	"context"
+	"errors"
 	"young-eagles/external/models"
 	"young-eagles/internal/dao"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 type PilotService interface {
-	PostPilotData(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error)
-	GetPilotData(ctx context.Context, pilotUuid string) (*models.Pilot, error)
-	PatchUpdatePilotData(ctx context.Context, pilotUuid string, body models.PatchPilotBodyRequest) (*models.Pilot, error)
+	PostPilotData(ctx context.Context, pilot models.Pilot) (*models.Pilot, error)
+	GetPilotData(ctx context.Context, pilotUuid uuid.UUID) (*models.Pilot, error)
+	PatchUpdatePilotData(ctx context.Context, pilotUuid uuid.UUID, body models.PatchPilotBodyRequest) (*models.Pilot, error)
 }
 
 type pilotServiceImpl struct {
@@ -22,43 +25,32 @@ func NewPilotService(pilotDao dao.PilotDao) PilotService {
 	}
 }
 
-func (p pilotServiceImpl) PostPilotData(ctx context.Context, firstName, lastName, email string, eaaChapter int) (*models.Pilot, error) {
-	//pilot, _ := p.pilotDao.GetPilotByNameChapterCombo(ctx, firstName, lastName, eaaChapter)
-	//
-	//if pilot != nil {
-	//	return nil, errors.New("pilot already exists")
-	//}
-	//
-	//pDbModel := dbmodels.PilotDatum{
-	//	PilotFirstName:   firstName,
-	//	PilotLastName:    lastName,
-	//	PilotEmail:       email,
-	//	CreatedAt:        null.TimeFrom(time.Now()),
-	//	EaaChapterNumber: eaaChapter,
-	//	Status:           null.StringFrom(models.PilotStatusActive.ToString()),
-	//}
-	//
-	//dbModel, err := p.pilotDao.AddPilot(ctx, pDbModel)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return models.PilotFromDb(*dbModel), nil
-	panic("implement me")
+func (p pilotServiceImpl) PostPilotData(ctx context.Context, pilot models.Pilot) (*models.Pilot, error) {
+	existingPilot, _ := p.pilotDao.GetPilotByNameChapterCombo(ctx, pilot.PilotFirstName, pilot.PilotLastName, pilot.EaaChapterNumber)
+
+	if existingPilot != nil {
+		return nil, errors.New("pilot already exists")
+	}
+
+	dbModel, err := p.pilotDao.AddPilot(ctx, pilot)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbModel, nil
 }
 
-func (p pilotServiceImpl) GetPilotData(ctx context.Context, pilotUuid string) (*models.Pilot, error) {
-	//pilot, err := p.pilotDao.GetPilotByUUID(ctx, pilotUuid)
-	//
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return models.PilotFromDb(*pilot), nil
-	panic("implement me")
+func (p pilotServiceImpl) GetPilotData(ctx context.Context, pilotUuid uuid.UUID) (*models.Pilot, error) {
+	pilot, err := p.pilotDao.GetPilotByUUID(ctx, pilotUuid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pilot, nil
 }
 
-func (p pilotServiceImpl) PatchUpdatePilotData(ctx context.Context, pilotUuid string, body models.PatchPilotBodyRequest) (*models.Pilot, error) {
+func (p pilotServiceImpl) PatchUpdatePilotData(ctx context.Context, pilotUuid uuid.UUID, body models.PatchPilotBodyRequest) (*models.Pilot, error) {
 	//pilot, err := p.pilotDao.GetPilotByUUID(ctx, pilotUuid)
 	//if err != nil {
 	//	return nil, err

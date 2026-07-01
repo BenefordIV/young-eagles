@@ -18,7 +18,10 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"github.com/stephenafamo/bob/expr"
+	"github.com/stephenafamo/bob/mods"
+	"github.com/stephenafamo/bob/orm"
 	"github.com/stephenafamo/bob/types/pgtypes"
+	"github.com/stephenafamo/scan"
 )
 
 // Pilot is an object representing the database table.
@@ -32,6 +35,8 @@ type Pilot struct {
 	UpdatedAt  time.Time `db:"updated_at" `
 
 	R pilotR `db:"-" `
+
+	C pilotC `db:"-" `
 }
 
 // PilotSlice is an alias for a slice of pointers to Pilot.
@@ -668,5 +673,302 @@ func buildPilotWhere[Q psql.Filterable](cols pilotColumns) pilotWhere[Q] {
 		EaaChapter: psql.Where[Q, int32](cols.EaaChapter.Expression),
 		CreatedAt:  psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		UpdatedAt:  psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+	}
+}
+
+func (o *Pilot) Preload(name string, retrieved any) error {
+	if o == nil {
+		return nil
+	}
+
+	switch name {
+	case "Flights":
+		rels, ok := retrieved.(FlightSlice)
+		if !ok {
+			return fmt.Errorf("pilot cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.Flights = rels
+		o.R.Loaded.Flights = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.Pilot = o
+				rel.R.Loaded.Pilot = true
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("pilot has no relationship %q", name)
+	}
+}
+
+type pilotPreloader struct{}
+
+func buildPilotPreloader() pilotPreloader {
+	return pilotPreloader{}
+}
+
+type pilotThenLoader[Q orm.Loadable] struct {
+	Flights func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+}
+
+func buildPilotThenLoader[Q orm.Loadable]() pilotThenLoader[Q] {
+	type FlightsLoadInterface interface {
+		LoadFlights(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+
+	return pilotThenLoader[Q]{
+		Flights: thenLoadBuilder[Q](
+			"Flights",
+			func(ctx context.Context, exec bob.Executor, retrieved FlightsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadFlights(ctx, exec, mods...)
+			},
+		),
+	}
+}
+
+// LoadFlights loads the pilot's Flights into the .R struct
+func (o *Pilot) LoadFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.Flights = nil
+	o.R.Loaded.Flights = false
+
+	related, err := o.Flights(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.Pilot = o
+		rel.R.Loaded.Pilot = true
+	}
+
+	o.R.Flights = related
+	o.R.Loaded.Flights = true
+	return nil
+}
+
+// LoadFlights loads the pilot's Flights into the .R struct
+func (os PilotSlice) LoadFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	flights, err := os.Flights(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.Flights = nil
+		o.R.Loaded.Flights = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	pilotByKey := make(map[uuid.UUID][]*Pilot, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		pilotByKey[o.ID] = append(pilotByKey[o.ID], o)
+	}
+
+	for _, rel := range flights {
+
+		owners, ok := pilotByKey[rel.PilotID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.Pilot = o
+			rel.R.Loaded.Pilot = true
+
+			o.R.Flights = append(o.R.Flights, rel)
+
+		}
+	}
+
+	return nil
+}
+
+// pilotC is where relationship counts are stored.
+type pilotC struct {
+	Flights *int64
+}
+
+// PreloadCount sets a count in the C struct by name
+func (o *Pilot) PreloadCount(name string, count int64) error {
+	if o == nil {
+		return nil
+	}
+
+	switch name {
+	case "Flights":
+		o.C.Flights = &count
+	}
+	return nil
+}
+
+type pilotCountPreloader struct {
+	Flights func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+}
+
+func buildPilotCountPreloader() pilotCountPreloader {
+	return pilotCountPreloader{
+		Flights: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*Pilot]("Flights", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Pilots.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(Flights.NameAsExpr()),
+					sm.Where(psql.Quote(Flights.Alias(), "pilot_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
+	}
+}
+
+type pilotCountThenLoader[Q orm.Loadable] struct {
+	Flights func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+}
+
+func buildPilotCountThenLoader[Q orm.Loadable]() pilotCountThenLoader[Q] {
+	type FlightsCountInterface interface {
+		LoadCountFlights(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+
+	return pilotCountThenLoader[Q]{
+		Flights: countThenLoadBuilder[Q](
+			"Flights",
+			func(ctx context.Context, exec bob.Executor, retrieved FlightsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountFlights(ctx, exec, mods...)
+			},
+		),
+	}
+}
+
+// LoadCountFlights loads the count of Flights into the C struct
+func (o *Pilot) LoadCountFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.Flights(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.Flights = &count
+	return nil
+}
+
+// LoadCountFlights loads the count of Flights for a slice in a single batch query
+func (os PilotSlice) LoadCountFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			Flights.Columns.PilotID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(Flights.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(Flights.Columns.PilotID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(Flights.Columns.PilotID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.Flights = &count
+	}
+
+	return nil
+}
+
+type pilotJoins[Q dialect.Joinable] struct {
+	typ     string
+	Flights modAs[Q, flightColumns]
+}
+
+func (j pilotJoins[Q]) aliasedAs(alias string) pilotJoins[Q] {
+	return buildPilotJoins[Q](buildPilotColumns(alias), j.typ)
+}
+
+func buildPilotJoins[Q dialect.Joinable](cols pilotColumns, typ string) pilotJoins[Q] {
+	return pilotJoins[Q]{
+		typ: typ,
+		Flights: modAs[Q, flightColumns]{
+			c: Flights.Columns,
+			f: func(to flightColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Flights.NameExpr().As(to.Alias())).On(
+						to.PilotID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
 	}
 }
