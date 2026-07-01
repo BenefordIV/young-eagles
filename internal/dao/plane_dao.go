@@ -2,59 +2,63 @@ package dao
 
 import (
 	"context"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"young-eagles/internal/dbmodels"
+	"young-eagles/internal/db/gen/models"
+
+	"github.com/stephenafamo/bob"
 )
 
 type PlaneDao interface {
-	AddPlaneDatum(ctx context.Context, information dbmodels.PlaneInformation) (*dbmodels.PlaneInformation, error)
-	FindPlaneByCallNumber(ctx context.Context, number string) (*dbmodels.PlaneInformation, error)
-	DeletePlane(ctx context.Context, plane *dbmodels.PlaneInformation) error
-	UpdatePlane(ctx context.Context, plane *dbmodels.PlaneInformation) error
+	AddPlaneDatum(ctx context.Context, information models.Plane) (*models.Plane, error)
+	FindPlaneByCallNumber(ctx context.Context, number string) (*models.Plane, error)
+	DeletePlane(ctx context.Context, plane *models.Plane) error
+	UpdatePlane(ctx context.Context, plane *models.Plane) error
 }
 
 type planeDaoImpl struct {
-	dbConn DbConnection
+	dbConn bob.DB
 }
 
-func NewPlaneDao(conn DbConnection) PlaneDao {
+func NewPlaneDao(conn bob.DB) PlaneDao {
 	return &planeDaoImpl{
 		dbConn: conn,
 	}
 }
 
-func (p planeDaoImpl) FindPlaneByCallNumber(ctx context.Context, number string) (*dbmodels.PlaneInformation, error) {
-	plane, err := dbmodels.PlaneInformations(qm.WithDeleted(), dbmodels.PlaneInformationWhere.CallNumber.EQ(number)).One(ctx, p.dbConn.DbConn)
-	if err != nil {
-		return nil, err
-	}
-
-	return plane, nil
+func (p planeDaoImpl) FindPlaneByCallNumber(ctx context.Context, number string) (*models.Plane, error) {
+	//plane, err := dbmodels.PlaneInformations(qm.WithDeleted(), dbmodels.PlaneInformationWhere.CallNumber.EQ(number)).One(ctx, p.dbConn.DbConn)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//return plane, nil
+	panic("implement me")
 }
-func (p planeDaoImpl) AddPlaneDatum(ctx context.Context, information dbmodels.PlaneInformation) (*dbmodels.PlaneInformation, error) {
-	err := information.Insert(ctx, p.dbConn.DbConn, boil.Blacklist(dbmodels.PlaneInformationColumns.DeletedTS))
-	if err != nil {
-		return nil, err
-	}
-
-	return &information, nil
-}
-
-func (p planeDaoImpl) DeletePlane(ctx context.Context, plane *dbmodels.PlaneInformation) error {
-	_, err := plane.Delete(ctx, p.dbConn.DbConn, false)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (p planeDaoImpl) AddPlaneDatum(ctx context.Context, information models.Plane) (*models.Plane, error) {
+	//err := information.Insert(ctx, p.dbConn.DbConn, boil.Blacklist(dbmodels.PlaneInformationColumns.DeletedTS))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//return &information, nil
+	panic("implement me")
 }
 
-func (p planeDaoImpl) UpdatePlane(ctx context.Context, plane *dbmodels.PlaneInformation) error {
-	_, err := plane.Update(ctx, p.dbConn.DbConn, boil.Infer())
-	if err != nil {
-		return err
-	}
+func (p planeDaoImpl) DeletePlane(ctx context.Context, plane *models.Plane) error {
+	//_, err := plane.Delete(ctx, p.dbConn.DbConn, false)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//return nil
+	panic("implement me")
+}
 
-	return nil
+func (p planeDaoImpl) UpdatePlane(ctx context.Context, plane *models.Plane) error {
+	//_, err := plane.Update(ctx, p.dbConn.DbConn, boil.Infer())
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//return nil
+	panic("implement me")
 }

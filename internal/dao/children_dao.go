@@ -2,61 +2,68 @@ package dao
 
 import (
 	"context"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"log"
-	"young-eagles/internal/dbmodels"
+	"young-eagles/external/models"
+	dbmodels "young-eagles/internal/db/gen/models"
+
+	"github.com/aarondl/opt/omit"
+	"github.com/gofrs/uuid/v5"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/dialect"
 )
 
 type ChildrenDao interface {
-	PostChildData(ctx context.Context, child dbmodels.ChildInformation) (*dbmodels.ChildInformation, error)
-	GetChildByFirstLastName(ctx context.Context, fn, ln string) (*dbmodels.ChildInformation, error)
-	GetChildByUUID(ctx context.Context, uuid string) (*dbmodels.ChildInformation, error)
+	AddChildData(ctx context.Context, child models.Child) (*models.Child, error)
+	GetChildByFirstLastName(ctx context.Context, fn, ln string) (*models.Child, error)
+	GetChildByUUID(ctx context.Context, id uuid.UUID) (*models.Child, error)
 }
 
 type childrenDaoImpl struct {
-	dbConn DbConnection
+	dbConn bob.DB
 }
 
-func NewChildrenDao(conn DbConnection) ChildrenDao {
+func NewChildrenDao(conn bob.DB) ChildrenDao {
 	return &childrenDaoImpl{
 		dbConn: conn,
 	}
 }
 
-func (c childrenDaoImpl) PostChildData(ctx context.Context, child dbmodels.ChildInformation) (*dbmodels.ChildInformation, error) {
-	log.Println("adding child to database")
-	log.Println(child.UUID)
-	err := child.Insert(ctx, c.dbConn.DbConn,
-		boil.Blacklist(dbmodels.ChildInformationColumns.UpdatedTS, dbmodels.ChildInformationColumns.DeletedTS))
+func (c childrenDaoImpl) AddChildData(ctx context.Context, child models.Child) (*models.Child, error) {
+	s := &dbmodels.ChildSetter{
+		FirstName:      omit.From(child.FirstName),
+		LastName:       omit.From(child.LastName),
+		DateOfBirth:    omit.From(child.DateOfBirth),
+		HasCertificate: omit.From(child.HasCertificate),
+	}
+	ch, err := dbmodels.Children.Insert(s).One(ctx, c.dbConn)
 	if err != nil {
-		log.Printf("error %v", err)
 		return nil, err
 	}
 
-	return &child, nil
+	return models.ChildFromDb(*ch), nil
 }
 
-func (c childrenDaoImpl) GetChildByFirstLastName(ctx context.Context, fn string, ln string) (*dbmodels.ChildInformation, error) {
-	ec, err := dbmodels.ChildInformations(
-		dbmodels.ChildInformationWhere.FirstName.EQ(null.StringFrom(fn)),
-		dbmodels.ChildInformationWhere.LastName.EQ(null.StringFrom(ln)),
-	).One(ctx, c.dbConn.DbConn)
+func (c childrenDaoImpl) GetChildByFirstLastName(ctx context.Context, fn string, ln string) (*models.Child, error) {
+	log.Printf("getting child by firstname/lastname %s, %s", ln, fn)
+	s := []bob.Mod[*dialect.SelectQuery]{
+		dbmodels.SelectWhere.Children.FirstName.EQ(fn),
+		dbmodels.SelectWhere.Children.LastName.EQ(ln),
+	}
+
+	row, err := dbmodels.Children.Query(s...).One(ctx, c.dbConn)
 	if err != nil {
 		return nil, err
 	}
 
-	return ec, nil
+	return models.ChildFromDb(*row), nil
 }
 
-func (c childrenDaoImpl) GetChildByUUID(ctx context.Context, uuid string) (*dbmodels.ChildInformation, error) {
-	log.Printf("getting child by uuid %v", uuid)
-	ec, err := dbmodels.ChildInformations(
-		dbmodels.ChildInformationWhere.UUID.EQ(uuid),
-	).One(ctx, c.dbConn.DbConn)
+func (c childrenDaoImpl) GetChildByUUID(ctx context.Context, id uuid.UUID) (*models.Child, error) {
+	log.Printf("getting child by uuid %v", id)
+	row, err := dbmodels.Children.Query(dbmodels.SelectWhere.Children.ID.EQ(id)).One(ctx, c.dbConn)
 	if err != nil {
 		return nil, err
 	}
 
-	return ec, nil
+	return models.ChildFromDb(*row), nil
 }

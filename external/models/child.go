@@ -1,39 +1,35 @@
 package models
 
 import (
-	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
 	"time"
-	"young-eagles/internal/dbmodels"
+	dbmodels "young-eagles/internal/db/gen/models"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 type Child struct {
 	UUID           uuid.UUID `json:"uuid"`
 	FirstName      string    `json:"firstName"`
 	LastName       string    `json:"lastName"`
-	DateOfBirth    string    `json:"dateOfBirth"`
+	DateOfBirth    time.Time `json:"dateOfBirth"`
 	HasCertificate bool      `json:"hasCertificate"`
 }
 
-func ChildFromDb(datum dbmodels.ChildInformation) *Child {
+func ChildFromDb(datum dbmodels.Child) *Child {
 	return &Child{
-		UUID:           uuid.MustParse(datum.UUID),
-		FirstName:      datum.FirstName.String,
-		LastName:       datum.LastName.String,
-		DateOfBirth:    datum.DateOfBirth.Time.String(),
-		HasCertificate: datum.HasCertificate.Bool,
+		UUID:           datum.ID,
+		FirstName:      datum.FirstName,
+		LastName:       datum.LastName,
+		DateOfBirth:    datum.DateOfBirth,
+		HasCertificate: datum.HasCertificate,
 	}
 }
 
-func (c *Child) ToDbModel() dbmodels.ChildInformation {
-	dob, err := time.Parse(c.DateOfBirth, "2006-01-02")
-	if err != nil {
-		return dbmodels.ChildInformation{}
-	}
-	return dbmodels.ChildInformation{
-		FirstName:      null.StringFrom(c.FirstName),
-		LastName:       null.StringFrom(c.LastName),
-		DateOfBirth:    null.TimeFrom(dob),
-		HasCertificate: null.BoolFrom(c.HasCertificate),
+func (c *Child) ToDbModel() dbmodels.Child {
+	return dbmodels.Child{
+		FirstName:      c.FirstName,
+		LastName:       c.LastName,
+		DateOfBirth:    c.DateOfBirth,
+		HasCertificate: c.HasCertificate,
 	}
 }

@@ -3,13 +3,14 @@ package transport
 import (
 	"context"
 	"encoding/json"
-	"github.com/friendsofgo/errors"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"young-eagles/internal/endpoints"
+
+	"github.com/friendsofgo/errors"
+	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/gofrs/uuid/v5"
+	"github.com/gorilla/mux"
 )
 
 func PostChildInformation(endpoint endpoints.ChildEndpoints, router *mux.Router) {
@@ -59,7 +60,7 @@ func GetChildInformation(endpoint endpoints.ChildEndpoints, router *mux.Router) 
 func decodeGetChildDatum(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.ChildGetRequest
 	vars := mux.Vars(r)
-	childUuid, err := uuid.Parse(vars["childUuid"])
+	childUuid, err := uuid.FromString(vars["childUuid"])
 	if err != nil {
 		return nil, errors.New("invalid uuid")
 	}

@@ -3,10 +3,8 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/volatiletech/null/v8"
 	"young-eagles/external/models"
 	"young-eagles/internal/dao"
-	"young-eagles/internal/dbmodels"
 )
 
 type PlanesService interface {
@@ -26,27 +24,28 @@ func MakePlanesService(planeDao dao.PlaneDao) PlanesService {
 }
 
 func (p planesServiceImpl) AddPlaneDatum(ctx context.Context, callNumber, planeModel, planeMake string) (*models.Plane, error) {
-	plane, _ := p.planeDao.FindPlaneByCallNumber(ctx, callNumber)
-
-	if plane != nil {
-		return nil, errors.New("plane already exists, cannot add")
-	}
-
-	// Add plane to database
-	pAdd := dbmodels.PlaneInformation{
-		CallNumber: callNumber,
-		Model:      null.StringFrom(planeModel),
-		Make:       null.StringFrom(planeMake),
-	}
-
-	pAdded, err := p.planeDao.AddPlaneDatum(ctx, pAdd)
-	if err != nil {
-		return nil, err
-	}
-
-	pM := models.PlaneFromDb(*pAdded)
-
-	return &pM, nil
+	//plane, _ := p.planeDao.FindPlaneByCallNumber(ctx, callNumber)
+	//
+	//if plane != nil {
+	//	return nil, errors.New("plane already exists, cannot add")
+	//}
+	//
+	//// Add plane to database
+	//pAdd := dbmodels.PlaneInformation{
+	//	CallNumber: callNumber,
+	//	Model:      null.StringFrom(planeModel),
+	//	Make:       null.StringFrom(planeMake),
+	//}
+	//
+	//pAdded, err := p.planeDao.AddPlaneDatum(ctx, pAdd)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//pM := models.PlaneFromDb(*pAdded)
+	//
+	//return &pM, nil
+	panic("implement me")
 }
 
 func (p planesServiceImpl) DeletePlaneDatum(ctx context.Context, number string) error {
@@ -69,22 +68,23 @@ func (p planesServiceImpl) DeletePlaneDatum(ctx context.Context, number string) 
 }
 
 func (p planesServiceImpl) ReinstatePlaneDatum(ctx context.Context, number string) (*models.Plane, error) {
-	plane, err := p.planeDao.FindPlaneByCallNumber(ctx, number)
-	if err != nil {
-		return nil, err
-	}
-
-	if plane == nil {
-		return nil, errors.New("plane not found")
-	}
-
-	plane.DeletedTS = null.Time{}
-	// Set DeletedTS to null to reinstate the plane
-	err = p.planeDao.UpdatePlane(ctx, plane)
-
-	// Reinstate the plane (this might involve updating a status or similar)
-	// For now, we will just return the plane as is
-	pM := models.PlaneFromDb(*plane)
-
-	return &pM, nil
+	//plane, err := p.planeDao.FindPlaneByCallNumber(ctx, number)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//if plane == nil {
+	//	return nil, errors.New("plane not found")
+	//}
+	//
+	//plane.DeletedTS = null.Time{}
+	//// Set DeletedTS to null to reinstate the plane
+	//err = p.planeDao.UpdatePlane(ctx, plane)
+	//
+	//// Reinstate the plane (this might involve updating a status or similar)
+	//// For now, we will just return the plane as is
+	//pM := models.PlaneFromDb(*plane)
+	//
+	//return &pM, nil
+	panic("implement me")
 }
