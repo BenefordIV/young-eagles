@@ -109,15 +109,12 @@ func TestUpdatePilot(t *testing.T) {
 			EaaChapterNumber: 456,
 		}
 
-		err = pilotDao.UpdatePilot(ctx, &update)
+		updated, err := pilotDao.UpdatePilot(ctx, &update)
 		require.NoError(t, err)
-
-		found, err := pilotDao.GetPilotByUUID(ctx, tp.ID)
-		require.NoError(t, err)
-		require.NotNil(t, found)
-		require.Equal(t, update.PilotFirstName, found.PilotFirstName)
-		require.Equal(t, update.PilotLastName, found.PilotLastName)
-		require.Equal(t, update.EaaChapterNumber, found.EaaChapterNumber)
-		require.Equal(t, update.PilotEmail, found.PilotEmail)
+		require.NotNil(t, updated)
+		require.Equal(t, update.PilotFirstName, updated.PilotFirstName)
+		require.Equal(t, update.PilotLastName, updated.PilotLastName)
+		require.Equal(t, update.EaaChapterNumber, updated.EaaChapterNumber)
+		require.Equal(t, update.PilotEmail, updated.PilotEmail)
 	})
 }

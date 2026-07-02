@@ -15,7 +15,7 @@ type PilotDao interface {
 	AddPilot(ctx context.Context, pilot models.Pilot) (*models.Pilot, error)
 	GetPilotByNameChapterCombo(ctx context.Context, firstName, lastName string, eaaChapter int) (*models.Pilot, error)
 	GetPilotByUUID(ctx context.Context, uuid uuid.UUID) (*models.Pilot, error)
-	UpdatePilot(ctx context.Context, update *models.Pilot) error
+	UpdatePilot(ctx context.Context, update *models.Pilot) (*models.Pilot, error)
 }
 
 type pilotDaoImpl struct {
@@ -73,10 +73,10 @@ func (p pilotDaoImpl) GetPilotByUUID(ctx context.Context, uuid uuid.UUID) (*mode
 	return found, nil
 }
 
-func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *models.Pilot) error {
+func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *models.Pilot) (*models.Pilot, error) {
 	existing, err := dbmodels.Pilots.Query(dbmodels.SelectWhere.Pilots.ID.EQ(update.PilotUuid)).One(ctx, p.dbConn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	s := &dbmodels.PilotSetter{
@@ -87,8 +87,13 @@ func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *models.Pilot) err
 	}
 
 	if err = existing.Update(ctx, p.dbConn, s); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	updated, err := dbmodels.Pilots.Query(dbmodels.SelectWhere.Pilots.ID.EQ(update.PilotUuid)).One(ctx, p.dbConn)
+	if err != nil {
+		return nil, err
+	}
+
+	return models.PilotFromDb(*updated), nil
 }

@@ -128,6 +128,6 @@ func MakePatchPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 			},
 		}
 
-		return resp, nil
+		return resp.Body, nil
 	}
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"young-eagles/external/models"
 	"young-eagles/internal/dao"
@@ -23,7 +24,10 @@ func MakePlanesService(planeDao dao.PlaneDao) PlanesService {
 }
 
 func (p planesServiceImpl) AddPlaneDatum(ctx context.Context, plane models.Plane) (*models.Plane, error) {
-	existingPlane, _ := p.planeDao.FindPlaneByCallNumber(ctx, plane.CallNumber)
+	existingPlane, err := p.planeDao.FindPlaneByCallNumber(ctx, plane.CallNumber)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
 
 	if existingPlane != nil {
 		return nil, errors.New("plane already exists, cannot add")
@@ -50,9 +54,8 @@ func (p planesServiceImpl) DeletePlaneDatum(ctx context.Context, number string) 
 	}
 
 	err = p.planeDao.DeletePlane(ctx, plane)
-
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return nil

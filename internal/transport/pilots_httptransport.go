@@ -3,14 +3,15 @@ package transport
 import (
 	"context"
 	"encoding/json"
-	"github.com/friendsofgo/errors"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"young-eagles/internal/endpoints"
+
+	"github.com/friendsofgo/errors"
+	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/gofrs/uuid/v5"
+	"github.com/gorilla/mux"
 )
 
 func PostPilotData(endpoint endpoints.PilotEndpoints, router *mux.Router) {
@@ -61,7 +62,7 @@ func decodeGetPilotData(ctx context.Context, request *http.Request) (interface{}
 
 	vars := mux.Vars(request)
 
-	uuid, err := uuid.Parse(vars["pilotUuid"])
+	uuid, err := uuid.FromString(vars["pilotUuid"])
 	if err != nil {
 		return nil, errors.New("invalid uuid")
 	}
@@ -88,7 +89,7 @@ func decodePatchPilotData(ctx context.Context, request *http.Request) (interface
 	var req endpoints.PatchPilotRequest
 
 	vars := mux.Vars(request)
-	pilotUuid, err := uuid.Parse(vars["pilotUuid"])
+	pilotUuid, err := uuid.FromString(vars["pilotUuid"])
 	if err != nil {
 		return nil, errors.New("invalid uuid")
 	}

@@ -2,13 +2,13 @@ package dao_test
 
 import (
 	"context"
-	"crypto/rand"
 	"testing"
 	"young-eagles/external/models"
 	"young-eagles/internal/dao"
 	"young-eagles/internal/db/gen/models/factory"
 	"young-eagles/test"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 )
@@ -49,7 +49,7 @@ func Test_AddNewPlane(t *testing.T) {
 	ctx := context.Background()
 	t.Run("success", func(t *testing.T) {
 		p := models.Plane{
-			CallNumber: rand.Text(),
+			CallNumber: uuid.Must(uuid.NewV7()).String(),
 			PlaneModel: "Cesna",
 			PlaneMake:  "Skyhawk",
 		}
