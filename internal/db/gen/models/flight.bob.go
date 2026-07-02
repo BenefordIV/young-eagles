@@ -18,6 +18,8 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"github.com/stephenafamo/bob/expr"
+	"github.com/stephenafamo/bob/mods"
+	"github.com/stephenafamo/bob/orm"
 	"github.com/stephenafamo/bob/types/pgtypes"
 )
 
@@ -798,5 +800,428 @@ func buildFlightWhere[Q psql.Filterable](cols flightColumns) flightWhere[Q] {
 		FlightDate:      psql.Where[Q, time.Time](cols.FlightDate.Expression),
 		CreatedAt:       psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		UpdatedAt:       psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+	}
+}
+
+func (o *Flight) Preload(name string, retrieved any) error {
+	if o == nil {
+		return nil
+	}
+
+	switch name {
+	case "Child":
+		rel, ok := retrieved.(*Child)
+		if !ok {
+			return fmt.Errorf("flight cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.Child = rel
+		o.R.Loaded.Child = true
+
+		if rel != nil {
+			rel.R.Flights = FlightSlice{o}
+		}
+		return nil
+	case "Pilot":
+		rel, ok := retrieved.(*Pilot)
+		if !ok {
+			return fmt.Errorf("flight cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.Pilot = rel
+		o.R.Loaded.Pilot = true
+
+		if rel != nil {
+			rel.R.Flights = FlightSlice{o}
+		}
+		return nil
+	case "PlaneCallNumberPlane":
+		rel, ok := retrieved.(*Plane)
+		if !ok {
+			return fmt.Errorf("flight cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.PlaneCallNumberPlane = rel
+		o.R.Loaded.PlaneCallNumberPlane = true
+
+		if rel != nil {
+			rel.R.PlaneCallNumberFlights = FlightSlice{o}
+		}
+		return nil
+	default:
+		return fmt.Errorf("flight has no relationship %q", name)
+	}
+}
+
+type flightPreloader struct {
+	Child                func(...psql.PreloadOption) psql.Preloader
+	Pilot                func(...psql.PreloadOption) psql.Preloader
+	PlaneCallNumberPlane func(...psql.PreloadOption) psql.Preloader
+}
+
+func buildFlightPreloader() flightPreloader {
+	return flightPreloader{
+		Child: func(opts ...psql.PreloadOption) psql.Preloader {
+			return psql.Preload[*Child, ChildSlice](psql.PreloadRel{
+				Name: "Child",
+				Sides: []psql.PreloadSide{
+					{
+						From:        Flights,
+						To:          Children,
+						FromColumns: []string{"child_id"},
+						ToColumns:   []string{"id"},
+					},
+				},
+			}, Children.Columns.Names(), opts...)
+		},
+		Pilot: func(opts ...psql.PreloadOption) psql.Preloader {
+			return psql.Preload[*Pilot, PilotSlice](psql.PreloadRel{
+				Name: "Pilot",
+				Sides: []psql.PreloadSide{
+					{
+						From:        Flights,
+						To:          Pilots,
+						FromColumns: []string{"pilot_id"},
+						ToColumns:   []string{"id"},
+					},
+				},
+			}, Pilots.Columns.Names(), opts...)
+		},
+		PlaneCallNumberPlane: func(opts ...psql.PreloadOption) psql.Preloader {
+			return psql.Preload[*Plane, PlaneSlice](psql.PreloadRel{
+				Name: "PlaneCallNumberPlane",
+				Sides: []psql.PreloadSide{
+					{
+						From:        Flights,
+						To:          Planes,
+						FromColumns: []string{"plane_call_number"},
+						ToColumns:   []string{"call_number"},
+					},
+				},
+			}, Planes.Columns.Names(), opts...)
+		},
+	}
+}
+
+type flightThenLoader[Q orm.Loadable] struct {
+	Child                func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	Pilot                func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	PlaneCallNumberPlane func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+}
+
+func buildFlightThenLoader[Q orm.Loadable]() flightThenLoader[Q] {
+	type ChildLoadInterface interface {
+		LoadChild(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type PilotLoadInterface interface {
+		LoadPilot(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type PlaneCallNumberPlaneLoadInterface interface {
+		LoadPlaneCallNumberPlane(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+
+	return flightThenLoader[Q]{
+		Child: thenLoadBuilder[Q](
+			"Child",
+			func(ctx context.Context, exec bob.Executor, retrieved ChildLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadChild(ctx, exec, mods...)
+			},
+		),
+		Pilot: thenLoadBuilder[Q](
+			"Pilot",
+			func(ctx context.Context, exec bob.Executor, retrieved PilotLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadPilot(ctx, exec, mods...)
+			},
+		),
+		PlaneCallNumberPlane: thenLoadBuilder[Q](
+			"PlaneCallNumberPlane",
+			func(ctx context.Context, exec bob.Executor, retrieved PlaneCallNumberPlaneLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadPlaneCallNumberPlane(ctx, exec, mods...)
+			},
+		),
+	}
+}
+
+// LoadChild loads the flight's Child into the .R struct
+func (o *Flight) LoadChild(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.Child = nil
+	o.R.Loaded.Child = false
+
+	related, err := o.Child(mods...).One(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	related.R.Flights = FlightSlice{o}
+
+	o.R.Child = related
+	o.R.Loaded.Child = true
+	return nil
+}
+
+// LoadChild loads the flight's Child into the .R struct
+func (os FlightSlice) LoadChild(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	children, err := os.Child(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.Child = nil
+		o.R.Loaded.Child = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	flightByKey := make(map[uuid.UUID][]*Flight, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		flightByKey[o.ChildID] = append(flightByKey[o.ChildID], o)
+	}
+
+	for _, rel := range children {
+
+		owners, ok := flightByKey[rel.ID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			// to-one: keep only the first matching child (matches the previous break)
+			if o.R.Child != nil {
+				continue
+			}
+
+			rel.R.Flights = append(rel.R.Flights, o)
+
+			o.R.Child = rel
+
+		}
+	}
+
+	return nil
+}
+
+// LoadPilot loads the flight's Pilot into the .R struct
+func (o *Flight) LoadPilot(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.Pilot = nil
+	o.R.Loaded.Pilot = false
+
+	related, err := o.Pilot(mods...).One(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	related.R.Flights = FlightSlice{o}
+
+	o.R.Pilot = related
+	o.R.Loaded.Pilot = true
+	return nil
+}
+
+// LoadPilot loads the flight's Pilot into the .R struct
+func (os FlightSlice) LoadPilot(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	pilots, err := os.Pilot(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.Pilot = nil
+		o.R.Loaded.Pilot = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	flightByKey := make(map[uuid.UUID][]*Flight, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		flightByKey[o.PilotID] = append(flightByKey[o.PilotID], o)
+	}
+
+	for _, rel := range pilots {
+
+		owners, ok := flightByKey[rel.ID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			// to-one: keep only the first matching child (matches the previous break)
+			if o.R.Pilot != nil {
+				continue
+			}
+
+			rel.R.Flights = append(rel.R.Flights, o)
+
+			o.R.Pilot = rel
+
+		}
+	}
+
+	return nil
+}
+
+// LoadPlaneCallNumberPlane loads the flight's PlaneCallNumberPlane into the .R struct
+func (o *Flight) LoadPlaneCallNumberPlane(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.PlaneCallNumberPlane = nil
+	o.R.Loaded.PlaneCallNumberPlane = false
+
+	related, err := o.PlaneCallNumberPlane(mods...).One(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	related.R.PlaneCallNumberFlights = FlightSlice{o}
+
+	o.R.PlaneCallNumberPlane = related
+	o.R.Loaded.PlaneCallNumberPlane = true
+	return nil
+}
+
+// LoadPlaneCallNumberPlane loads the flight's PlaneCallNumberPlane into the .R struct
+func (os FlightSlice) LoadPlaneCallNumberPlane(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	planes, err := os.PlaneCallNumberPlane(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.PlaneCallNumberPlane = nil
+		o.R.Loaded.PlaneCallNumberPlane = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	flightByKey := make(map[string][]*Flight, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		flightByKey[o.PlaneCallNumber] = append(flightByKey[o.PlaneCallNumber], o)
+	}
+
+	for _, rel := range planes {
+
+		owners, ok := flightByKey[rel.CallNumber]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			// to-one: keep only the first matching child (matches the previous break)
+			if o.R.PlaneCallNumberPlane != nil {
+				continue
+			}
+
+			rel.R.PlaneCallNumberFlights = append(rel.R.PlaneCallNumberFlights, o)
+
+			o.R.PlaneCallNumberPlane = rel
+
+		}
+	}
+
+	return nil
+}
+
+type flightJoins[Q dialect.Joinable] struct {
+	typ                  string
+	Child                modAs[Q, childColumns]
+	Pilot                modAs[Q, pilotColumns]
+	PlaneCallNumberPlane modAs[Q, planeColumns]
+}
+
+func (j flightJoins[Q]) aliasedAs(alias string) flightJoins[Q] {
+	return buildFlightJoins[Q](buildFlightColumns(alias), j.typ)
+}
+
+func buildFlightJoins[Q dialect.Joinable](cols flightColumns, typ string) flightJoins[Q] {
+	return flightJoins[Q]{
+		typ: typ,
+		Child: modAs[Q, childColumns]{
+			c: Children.Columns,
+			f: func(to childColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Children.NameExpr().As(to.Alias())).On(
+						to.ID.EQ(cols.ChildID),
+					))
+				}
+
+				return mods
+			},
+		},
+		Pilot: modAs[Q, pilotColumns]{
+			c: Pilots.Columns,
+			f: func(to pilotColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Pilots.NameExpr().As(to.Alias())).On(
+						to.ID.EQ(cols.PilotID),
+					))
+				}
+
+				return mods
+			},
+		},
+		PlaneCallNumberPlane: modAs[Q, planeColumns]{
+			c: Planes.Columns,
+			f: func(to planeColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Planes.NameExpr().As(to.Alias())).On(
+						to.CallNumber.EQ(cols.PlaneCallNumber),
+					))
+				}
+
+				return mods
+			},
+		},
 	}
 }

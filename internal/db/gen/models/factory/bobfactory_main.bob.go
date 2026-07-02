@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 	"unsafe"
-	models2 "young-eagles/internal/db/gen/models"
+	"young-eagles/internal/db/gen/models"
 
 	"github.com/gofrs/uuid/v5"
 )
@@ -39,13 +39,13 @@ func (f *Factory) NewChildWithContext(ctx context.Context, mods ...ChildMod) *Ch
 	return o
 }
 
-func (f *Factory) FromExistingChild(ctx context.Context, m *models2.Child) *ChildTemplate {
+func (f *Factory) FromExistingChild(ctx context.Context, m *models.Child) *ChildTemplate {
 	visited := make(map[uintptr]struct{})
 	ctx = factoryVisitedCtx.WithValue(ctx, visited)
 	return f.fromExistingChild(ctx, m)
 }
 
-func (f *Factory) fromExistingChild(ctx context.Context, m *models2.Child) *ChildTemplate {
+func (f *Factory) fromExistingChild(ctx context.Context, m *models.Child) *ChildTemplate {
 	o := &ChildTemplate{f: f, alreadyPersisted: true}
 
 	o.ID = func() uuid.UUID { return m.ID }
@@ -86,13 +86,13 @@ func (f *Factory) NewFlightWithContext(ctx context.Context, mods ...FlightMod) *
 	return o
 }
 
-func (f *Factory) FromExistingFlight(ctx context.Context, m *models2.Flight) *FlightTemplate {
+func (f *Factory) FromExistingFlight(ctx context.Context, m *models.Flight) *FlightTemplate {
 	visited := make(map[uintptr]struct{})
 	ctx = factoryVisitedCtx.WithValue(ctx, visited)
 	return f.fromExistingFlight(ctx, m)
 }
 
-func (f *Factory) fromExistingFlight(ctx context.Context, m *models2.Flight) *FlightTemplate {
+func (f *Factory) fromExistingFlight(ctx context.Context, m *models.Flight) *FlightTemplate {
 	o := &FlightTemplate{f: f, alreadyPersisted: true}
 
 	o.ID = func() uuid.UUID { return m.ID }
@@ -139,13 +139,13 @@ func (f *Factory) NewPilotWithContext(ctx context.Context, mods ...PilotMod) *Pi
 	return o
 }
 
-func (f *Factory) FromExistingPilot(ctx context.Context, m *models2.Pilot) *PilotTemplate {
+func (f *Factory) FromExistingPilot(ctx context.Context, m *models.Pilot) *PilotTemplate {
 	visited := make(map[uintptr]struct{})
 	ctx = factoryVisitedCtx.WithValue(ctx, visited)
 	return f.fromExistingPilot(ctx, m)
 }
 
-func (f *Factory) fromExistingPilot(ctx context.Context, m *models2.Pilot) *PilotTemplate {
+func (f *Factory) fromExistingPilot(ctx context.Context, m *models.Pilot) *PilotTemplate {
 	o := &PilotTemplate{f: f, alreadyPersisted: true}
 
 	o.ID = func() uuid.UUID { return m.ID }
@@ -186,13 +186,13 @@ func (f *Factory) NewPlaneWithContext(ctx context.Context, mods ...PlaneMod) *Pl
 	return o
 }
 
-func (f *Factory) FromExistingPlane(ctx context.Context, m *models2.Plane) *PlaneTemplate {
+func (f *Factory) FromExistingPlane(ctx context.Context, m *models.Plane) *PlaneTemplate {
 	visited := make(map[uintptr]struct{})
 	ctx = factoryVisitedCtx.WithValue(ctx, visited)
 	return f.fromExistingPlane(ctx, m)
 }
 
-func (f *Factory) fromExistingPlane(ctx context.Context, m *models2.Plane) *PlaneTemplate {
+func (f *Factory) fromExistingPlane(ctx context.Context, m *models.Plane) *PlaneTemplate {
 	o := &PlaneTemplate{f: f, alreadyPersisted: true}
 
 	o.CallNumber = func() string { return m.CallNumber }

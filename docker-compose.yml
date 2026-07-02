@@ -36,10 +36,8 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      DB_NAME: "young_eagles"
-      DB_PORT: "5432"
-      DB_HOST: "db"
-      DB_USER: "ye_admin"
-      DB_PASS: "young_eagles"
-    depends_on:
-      - db
+      - DB_NAME=young_eagles_developer
+      - DB_HOST=young-eagle-developer.cxwcc8oqmytb.us-east-1.rds.amazonaws.com
+      - DB_PORT=5432
+      - DB_PASS=3dgeL0rd?!?
+      - DB_USER=ye_admin

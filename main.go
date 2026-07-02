@@ -54,7 +54,6 @@ func main() {
 	planesEndpoint := endpoints.MakePlaneEndpoints(planesService)
 	transport.AddPlaneDatum(planesEndpoint, v1Router)
 	transport.DeletePlaneDatum(planesEndpoint, v1Router)
-	transport.ReinstatePlaneDatum(planesEndpoint, v1Router)
 
 	childrenService := services.NewChildrenService(dao.NewChildrenDao(bdb))
 	childrenEndpoints := endpoints.NewChildEndpoints(childrenService)

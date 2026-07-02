@@ -2,8 +2,10 @@ package dao
 
 import (
 	"context"
-	"young-eagles/internal/db/gen/models"
+	"young-eagles/external/models"
+	dbmodels "young-eagles/internal/db/gen/models"
 
+	"github.com/aarondl/opt/omit"
 	"github.com/stephenafamo/bob"
 )
 
@@ -25,40 +27,52 @@ func NewPlaneDao(conn bob.DB) PlaneDao {
 }
 
 func (p planeDaoImpl) FindPlaneByCallNumber(ctx context.Context, number string) (*models.Plane, error) {
-	//plane, err := dbmodels.PlaneInformations(qm.WithDeleted(), dbmodels.PlaneInformationWhere.CallNumber.EQ(number)).One(ctx, p.dbConn.DbConn)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return plane, nil
-	panic("implement me")
+	plane, err := dbmodels.Planes.Query(dbmodels.SelectWhere.Planes.CallNumber.EQ(number)).One(ctx, p.dbConn)
+	if err != nil {
+		return nil, err
+	}
+
+	found := models.PlaneFromDb(*plane)
+
+	return found, nil
 }
 func (p planeDaoImpl) AddPlaneDatum(ctx context.Context, information models.Plane) (*models.Plane, error) {
-	//err := information.Insert(ctx, p.dbConn.DbConn, boil.Blacklist(dbmodels.PlaneInformationColumns.DeletedTS))
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return &information, nil
-	panic("implement me")
+	s := &dbmodels.PlaneSetter{
+		CallNumber: omit.From(information.CallNumber),
+		Model:      omit.From(information.PlaneModel),
+		Make:       omit.From(information.PlaneMake),
+	}
+
+	row, err := dbmodels.Planes.Insert(s).One(ctx, p.dbConn)
+	if err != nil {
+		return nil, err
+	}
+
+	return models.PlaneFromDb(*row), nil
 }
 
 func (p planeDaoImpl) DeletePlane(ctx context.Context, plane *models.Plane) error {
-	//_, err := plane.Delete(ctx, p.dbConn.DbConn, false)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//return nil
-	panic("implement me")
+	_, err := dbmodels.Planes.Delete(dbmodels.DeleteWhere.Planes.CallNumber.EQ(plane.CallNumber)).Exec(ctx, p.dbConn)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p planeDaoImpl) UpdatePlane(ctx context.Context, plane *models.Plane) error {
-	//_, err := plane.Update(ctx, p.dbConn.DbConn, boil.Infer())
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//return nil
-	panic("implement me")
+	existing, err := dbmodels.Planes.Query(dbmodels.SelectWhere.Planes.CallNumber.EQ(plane.CallNumber)).One(ctx, p.dbConn)
+	if err != nil {
+		return err
+	}
+
+	s := &dbmodels.PlaneSetter{
+		CallNumber: omit.From(plane.CallNumber),
+		Model:      omit.From(plane.PlaneModel),
+		Make:       omit.From(plane.PlaneMake),
+	}
+
+	if err = existing.Update(ctx, p.dbConn, s); err != nil {
+		return err
+	}
+	return nil
 }

@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 	"time"
-	models2 "young-eagles/internal/db/gen/models"
+	"young-eagles/internal/db/gen/models"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/gofrs/uuid/v5"
@@ -68,9 +68,9 @@ func (o *ChildTemplate) Apply(ctx context.Context, mods ...ChildMod) {
 
 // setModelRels creates and sets the relationships on *models.Child
 // according to the relationships in the template. Nothing is inserted into the db
-func (t ChildTemplate) setModelRels(o *models2.Child) {
+func (t ChildTemplate) setModelRels(o *models.Child) {
 	if t.r.Flights != nil {
-		rel := models2.FlightSlice{}
+		rel := models.FlightSlice{}
 		for _, r := range t.r.Flights {
 			related := r.o.BuildMany(r.number)
 			for _, rel := range related {
@@ -87,8 +87,8 @@ func (t ChildTemplate) setModelRels(o *models2.Child) {
 
 // BuildSetter returns an *models.ChildSetter
 // this does nothing with the relationship templates
-func (o ChildTemplate) BuildSetter() *models2.ChildSetter {
-	m := &models2.ChildSetter{}
+func (o ChildTemplate) BuildSetter() *models.ChildSetter {
+	m := &models.ChildSetter{}
 
 	if o.ID != nil {
 		val := o.ID()
@@ -124,8 +124,8 @@ func (o ChildTemplate) BuildSetter() *models2.ChildSetter {
 
 // BuildManySetter returns an []*models.ChildSetter
 // this does nothing with the relationship templates
-func (o ChildTemplate) BuildManySetter(number int) []*models2.ChildSetter {
-	m := make([]*models2.ChildSetter, number)
+func (o ChildTemplate) BuildManySetter(number int) []*models.ChildSetter {
+	m := make([]*models.ChildSetter, number)
 
 	for i := range m {
 		m[i] = o.BuildSetter()
@@ -137,8 +137,8 @@ func (o ChildTemplate) BuildManySetter(number int) []*models2.ChildSetter {
 // Build returns an *models.Child
 // Related objects are also created and placed in the .R field
 // NOTE: Objects are not inserted into the database. Use ChildTemplate.Create
-func (o ChildTemplate) Build() *models2.Child {
-	m := &models2.Child{}
+func (o ChildTemplate) Build() *models.Child {
+	m := &models.Child{}
 
 	if o.ID != nil {
 		m.ID = o.ID()
@@ -170,8 +170,8 @@ func (o ChildTemplate) Build() *models2.Child {
 // BuildMany returns an models.ChildSlice
 // Related objects are also created and placed in the .R field
 // NOTE: Objects are not inserted into the database. Use ChildTemplate.CreateMany
-func (o ChildTemplate) BuildMany(number int) models2.ChildSlice {
-	m := make(models2.ChildSlice, number)
+func (o ChildTemplate) BuildMany(number int) models.ChildSlice {
+	m := make(models.ChildSlice, number)
 
 	for i := range m {
 		m[i] = o.Build()
@@ -180,7 +180,7 @@ func (o ChildTemplate) BuildMany(number int) models2.ChildSlice {
 	return m
 }
 
-func ensureCreatableChild(m *models2.ChildSetter) {
+func ensureCreatableChild(m *models.ChildSetter) {
 	if m.FirstName.IsUnset() {
 		val := random_string(nil)
 		m.FirstName = omit.From(val)
@@ -198,7 +198,7 @@ func ensureCreatableChild(m *models2.ChildSetter) {
 // insertOptRels creates and inserts any optional the relationships on *models.Child
 // according to the relationships in the template.
 // any required relationship should have already exist on the model
-func (o *ChildTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models2.Child) error {
+func (o *ChildTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.Child) error {
 	var err error
 
 	isFlightsDone, _ := childRelFlightsCtx.Value(ctx)
@@ -226,7 +226,7 @@ func (o *ChildTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m 
 
 // Create builds a child and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
-func (o *ChildTemplate) Create(ctx context.Context, exec bob.Executor) (*models2.Child, error) {
+func (o *ChildTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Child, error) {
 	var err error
 	opt := o.BuildSetter()
 	ensureCreatableChild(opt)
@@ -236,7 +236,7 @@ func (o *ChildTemplate) Create(ctx context.Context, exec bob.Executor) (*models2
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	m, err := models2.Children.Insert(opt).One(ctx, exec)
+	m, err := models.Children.Insert(opt).One(ctx, exec)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +262,7 @@ func (o *ChildTemplate) Create(ctx context.Context, exec bob.Executor) (*models2
 // MustCreate builds a child and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
 // panics if an error occurs
-func (o *ChildTemplate) MustCreate(ctx context.Context, exec bob.Executor) *models2.Child {
+func (o *ChildTemplate) MustCreate(ctx context.Context, exec bob.Executor) *models.Child {
 	m, err := o.Create(ctx, exec)
 	if err != nil {
 		panic(err)
@@ -273,7 +273,7 @@ func (o *ChildTemplate) MustCreate(ctx context.Context, exec bob.Executor) *mode
 // CreateOrFail builds a child and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
 // It calls `tb.Fatal(err)` on the test/benchmark if an error occurs
-func (o *ChildTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bob.Executor) *models2.Child {
+func (o *ChildTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bob.Executor) *models.Child {
 	tb.Helper()
 	m, err := o.Create(ctx, exec)
 	if err != nil {
@@ -285,9 +285,9 @@ func (o *ChildTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bo
 
 // CreateMany builds multiple children and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
-func (o ChildTemplate) CreateMany(ctx context.Context, exec bob.Executor, number int) (models2.ChildSlice, error) {
+func (o ChildTemplate) CreateMany(ctx context.Context, exec bob.Executor, number int) (models.ChildSlice, error) {
 	var err error
-	m := make(models2.ChildSlice, number)
+	m := make(models.ChildSlice, number)
 
 	for i := range m {
 		m[i], err = o.Create(ctx, exec)
@@ -302,7 +302,7 @@ func (o ChildTemplate) CreateMany(ctx context.Context, exec bob.Executor, number
 // MustCreateMany builds multiple children and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
 // panics if an error occurs
-func (o ChildTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, number int) models2.ChildSlice {
+func (o ChildTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, number int) models.ChildSlice {
 	m, err := o.CreateMany(ctx, exec, number)
 	if err != nil {
 		panic(err)
@@ -313,7 +313,7 @@ func (o ChildTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, nu
 // CreateManyOrFail builds multiple children and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
 // It calls `tb.Fatal(err)` on the test/benchmark if an error occurs
-func (o ChildTemplate) CreateManyOrFail(ctx context.Context, tb testing.TB, exec bob.Executor, number int) models2.ChildSlice {
+func (o ChildTemplate) CreateManyOrFail(ctx context.Context, tb testing.TB, exec bob.Executor, number int) models.ChildSlice {
 	tb.Helper()
 	m, err := o.CreateMany(ctx, exec, number)
 	if err != nil {
@@ -598,7 +598,7 @@ func (m childMods) AddNewFlights(number int, mods ...FlightMod) ChildMod {
 	})
 }
 
-func (m childMods) AddExistingFlights(existingModels ...*models2.Flight) ChildMod {
+func (m childMods) AddExistingFlights(existingModels ...*models.Flight) ChildMod {
 	return ChildModFunc(func(ctx context.Context, o *ChildTemplate) {
 		for _, em := range existingModels {
 			o.r.Flights = append(o.r.Flights, &childRFlightsR{

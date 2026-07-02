@@ -8,8 +8,8 @@ type Plane struct {
 	PlaneMake  string `json:"planeMake"`
 }
 
-func PlaneFromDb(information models.Plane) Plane {
-	return Plane{
+func PlaneFromDb(information models.Plane) *Plane {
+	return &Plane{
 		CallNumber: information.CallNumber,
 		PlaneModel: information.Model,
 		PlaneMake:  information.Make,

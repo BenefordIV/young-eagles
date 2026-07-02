@@ -3,10 +3,11 @@ package endpoints
 import (
 	"context"
 	"errors"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/google/uuid"
 	"young-eagles/external/models"
 	"young-eagles/internal/services"
+
+	"github.com/go-kit/kit/endpoint"
+	"github.com/gofrs/uuid/v5"
 )
 
 type PilotEndpoints struct {
@@ -49,7 +50,14 @@ func MakePostPilotEndpoint(s services.PilotService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to models.PilotPostRequest")
 		}
 
-		p, err := s.PostPilotData(ctx, req.Body.PilotFirstName, req.Body.PilotLastName, req.Body.PilotEmail, req.Body.EaaChapterNumber)
+		pilot := models.Pilot{
+			PilotFirstName:   req.Body.PilotFirstName,
+			PilotLastName:    req.Body.PilotLastName,
+			PilotEmail:       req.Body.PilotEmail,
+			EaaChapterNumber: req.Body.EaaChapterNumber,
+		}
+
+		p, err := s.PostPilotData(ctx, pilot)
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +91,7 @@ func MakeGetPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to models.PilotGetRequest")
 		}
 
-		p, err := s.GetPilotData(ctx, req.PilotUUID.String())
+		p, err := s.GetPilotData(ctx, req.PilotUUID)
 		if err != nil {
 			return nil, err
 		}
@@ -98,8 +106,7 @@ func MakeGetPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 }
 
 type PatchPilotRequest struct {
-	PilotUUID uuid.UUID                    `json:"pilotUuid"`
-	Body      models.PatchPilotBodyRequest `json:"body"`
+	Body models.PatchPilotBodyRequest `json:"body"`
 }
 
 func MakePatchPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
@@ -109,7 +116,7 @@ func MakePatchPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to models.PatchPilotRequest")
 		}
 
-		p, err := s.PatchUpdatePilotData(ctx, req.PilotUUID.String(), req.Body)
+		p, err := s.PatchUpdatePilotData(ctx, req.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -120,6 +127,6 @@ func MakePatchPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 			},
 		}
 
-		return resp, nil
+		return resp.Body, nil
 	}
 }
