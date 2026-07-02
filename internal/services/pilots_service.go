@@ -13,7 +13,7 @@ import (
 type PilotService interface {
 	PostPilotData(ctx context.Context, pilot models.Pilot) (*models.Pilot, error)
 	GetPilotData(ctx context.Context, pilotUuid uuid.UUID) (*models.Pilot, error)
-	PatchUpdatePilotData(ctx context.Context, pilotUuid uuid.UUID, body models.PatchPilotBodyRequest) error
+	PatchUpdatePilotData(ctx context.Context, body models.PatchPilotBodyRequest) (*models.Pilot, error)
 }
 
 type pilotServiceImpl struct {
@@ -54,15 +54,15 @@ func (p pilotServiceImpl) GetPilotData(ctx context.Context, pilotUuid uuid.UUID)
 	return pilot, nil
 }
 
-func (p pilotServiceImpl) PatchUpdatePilotData(ctx context.Context, pilotUuid uuid.UUID, body models.PatchPilotBodyRequest) error {
-	_, err := p.pilotDao.GetPilotByUUID(ctx, pilotUuid)
+func (p pilotServiceImpl) PatchUpdatePilotData(ctx context.Context, body models.PatchPilotBodyRequest) (*models.Pilot, error) {
+	_, err := p.pilotDao.GetPilotByUUID(ctx, body.Pilot.PilotUuid)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return err
+		return nil, err
 	}
 
-	err = p.pilotDao.UpdatePilot(ctx, &body.Pilot)
+	pilot, err := p.pilotDao.UpdatePilot(ctx, &body.Pilot)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return pilot, nil
 }

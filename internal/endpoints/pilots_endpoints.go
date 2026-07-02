@@ -106,8 +106,7 @@ func MakeGetPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 }
 
 type PatchPilotRequest struct {
-	PilotUUID uuid.UUID                    `json:"pilotUuid"`
-	Body      models.PatchPilotBodyRequest `json:"body"`
+	Body models.PatchPilotBodyRequest `json:"body"`
 }
 
 func MakePatchPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
@@ -117,7 +116,7 @@ func MakePatchPilotDataEndpoint(s services.PilotService) endpoint.Endpoint {
 			return nil, errors.New("cannot cast request to models.PatchPilotRequest")
 		}
 
-		p, err := s.PatchUpdatePilotData(ctx, req.PilotUUID, req.Body)
+		p, err := s.PatchUpdatePilotData(ctx, req.Body)
 		if err != nil {
 			return nil, err
 		}

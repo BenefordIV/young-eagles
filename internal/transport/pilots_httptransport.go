@@ -93,7 +93,6 @@ func decodePatchPilotData(ctx context.Context, request *http.Request) (interface
 	if err != nil {
 		return nil, errors.New("invalid uuid")
 	}
-	req.PilotUUID = pilotUuid
 
 	body, err := io.ReadAll(request.Body)
 	if err != nil {
@@ -102,6 +101,8 @@ func decodePatchPilotData(ctx context.Context, request *http.Request) (interface
 	if err := json.Unmarshal(body, &req.Body); err != nil {
 		return nil, errors.New("unable to unmarshal body")
 	}
+
+	req.Body.Pilot.PilotUuid = pilotUuid
 
 	return req, nil
 }
