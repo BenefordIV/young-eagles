@@ -41,3 +41,6 @@ services:
       - DB_PORT=5432
       - DB_PASS=young_eagles
       - DB_USER=ye_admin
+    depends_on:
+      - db
+      - migrate
