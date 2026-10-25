@@ -1,8 +1,8 @@
 BEGIN;
 
+DROP TABLE flight;
 DROP TABLE plane;
 DROP TABLE child;
 DROP TABLE pilot;
-DROP TABLE flight;
 
 COMMIT;
