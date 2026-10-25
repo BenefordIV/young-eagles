@@ -22,6 +22,9 @@ create table pilot
     updated_at timestamptz not null default now()
 );
 
+ALTER TABLE pilot
+    ADD CONSTRAINT unique_chapter_member UNIQUE (first_name, last_name, eaa_chapter);
+
 create table plane (
     call_number text primary key not null,
     model       text not null,
