@@ -52,6 +52,9 @@ func TestGetPilotByNameChapterCombo(t *testing.T) {
 	).Create(ctx, bdb)
 	require.NoError(t, err)
 	require.NotEmpty(t, testPilot)
+	defer func() {
+		_, _ = dbmodels.Pilots.Delete(dbmodels.DeleteWhere.Pilots.ID.EQ(testPilot.ID)).Exec(ctx, bdb)
+	}()
 	t.Run("success", func(t *testing.T) {
 		foundPilot, err := pilotDao.GetPilotByNameChapterCombo(ctx,
 			testPilot.FirstName,
