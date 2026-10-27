@@ -36,10 +36,11 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      DB_NAME: "young_eagles"
-      DB_PORT: "5432"
-      DB_HOST: "db"
-      DB_USER: "ye_admin"
-      DB_PASS: "young_eagles"
+      - DB_NAME=young_eagles
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_PASS=young_eagles
+      - DB_USER=ye_admin
     depends_on:
       - db
+      - migrate

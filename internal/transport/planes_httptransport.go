@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"young-eagles/internal/endpoints"
+
+	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
 )
 
 func AddPlaneDatum(endpoint endpoints.PlaneEndpoints, router *mux.Router) {
@@ -58,32 +59,6 @@ func DeletePlaneDatum(endpoint endpoints.PlaneEndpoints, router *mux.Router) {
 
 func decodeDeletePlaneDatum(_ context.Context, request *http.Request) (interface{}, error) {
 	req := endpoints.DeletePlaneRequest{}
-
-	vars := mux.Vars(request)
-	if callNumber, ok := vars["callNumber"]; ok {
-		req.CallNumber = callNumber
-	} else {
-		return nil, errors.New("callNumber is a required parameter")
-	}
-
-	return req, nil
-}
-
-func ReinstatePlaneDatum(endpoint endpoints.PlaneEndpoints, router *mux.Router) {
-	options := []httptransport.ServerOption{}
-
-	router.Handle(
-		"/plane/reinstate/{callNumber}",
-		httptransport.NewServer(
-			endpoint.ReinstatePlaneEndpoint,
-			decodeReinstatePlaneDatum,
-			encodeResponse,
-			options...,
-		)).Methods(http.MethodPatch)
-}
-
-func decodeReinstatePlaneDatum(_ context.Context, request *http.Request) (interface{}, error) {
-	req := endpoints.ReinstatePlaneDatumRequest{}
 
 	vars := mux.Vars(request)
 	if callNumber, ok := vars["callNumber"]; ok {

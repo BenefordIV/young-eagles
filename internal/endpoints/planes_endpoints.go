@@ -2,23 +2,22 @@ package endpoints
 
 import (
 	"context"
-	"github.com/go-kit/kit/endpoint"
 	"log"
 	"young-eagles/external/models"
 	"young-eagles/internal/services"
+
+	"github.com/go-kit/kit/endpoint"
 )
 
 type PlaneEndpoints struct {
-	AddPlaneEndpoint       endpoint.Endpoint
-	DeletePlaneEndpoint    endpoint.Endpoint
-	ReinstatePlaneEndpoint endpoint.Endpoint
+	AddPlaneEndpoint    endpoint.Endpoint
+	DeletePlaneEndpoint endpoint.Endpoint
 }
 
 func MakePlaneEndpoints(s services.PlanesService) PlaneEndpoints {
 	return PlaneEndpoints{
-		AddPlaneEndpoint:       MakeAddPlaneEndpoint(s),
-		DeletePlaneEndpoint:    MakeDeletePlaneEndpoint(s),
-		ReinstatePlaneEndpoint: MakeReinstatePlaneDatumEndpoint(s),
+		AddPlaneEndpoint:    MakeAddPlaneEndpoint(s),
+		DeletePlaneEndpoint: MakeDeletePlaneEndpoint(s),
 	}
 }
 
@@ -48,7 +47,12 @@ func MakeAddPlaneEndpoint(s services.PlanesService) endpoint.Endpoint {
 		}
 
 		log.Println("AddPlaneEndpoint called")
-		p, err := s.AddPlaneDatum(ctx, req.Body.CallNumber, req.Body.PlaneModel, req.Body.PlaneMake)
+		plane := models.Plane{
+			CallNumber: req.Body.CallNumber,
+			PlaneModel: req.Body.PlaneModel,
+			PlaneMake:  req.Body.PlaneMake,
+		}
+		p, err := s.AddPlaneDatum(ctx, plane)
 		if err != nil {
 			return nil, err
 		}
@@ -81,32 +85,5 @@ func MakeDeletePlaneEndpoint(s services.PlanesService) endpoint.Endpoint {
 		}
 
 		return EmptyResponse{}, nil // No content response for successful deletion
-	}
-}
-
-type ReinstatePlaneDatumRequest struct {
-	CallNumber string `json:"callNumber"`
-}
-
-func MakeReinstatePlaneDatumEndpoint(s services.PlanesService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(ReinstatePlaneDatumRequest)
-		if !ok {
-			return nil, nil
-		}
-
-		log.Println("ReinstatePlaneDatumEndpoint called")
-		plane, err := s.ReinstatePlaneDatum(ctx, req.CallNumber)
-		if err != nil {
-			return nil, err
-		}
-
-		resp := postPlaneResponse{
-			Body: postPlaneResponseBody{
-				Plane: *plane,
-			},
-		}
-
-		return resp.Body, nil
 	}
 }

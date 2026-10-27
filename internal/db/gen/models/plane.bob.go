@@ -17,7 +17,10 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"github.com/stephenafamo/bob/expr"
+	"github.com/stephenafamo/bob/mods"
+	"github.com/stephenafamo/bob/orm"
 	"github.com/stephenafamo/bob/types/pgtypes"
+	"github.com/stephenafamo/scan"
 )
 
 // Plane is an object representing the database table.
@@ -29,6 +32,8 @@ type Plane struct {
 	UpdatedAt  time.Time `db:"updated_at" `
 
 	R planeR `db:"-" `
+
+	C planeC `db:"-" `
 }
 
 // PlaneSlice is an alias for a slice of pointers to Plane.
@@ -619,5 +624,302 @@ func buildPlaneWhere[Q psql.Filterable](cols planeColumns) planeWhere[Q] {
 		Make:       psql.Where[Q, string](cols.Make.Expression),
 		CreateAt:   psql.Where[Q, time.Time](cols.CreateAt.Expression),
 		UpdatedAt:  psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+	}
+}
+
+func (o *Plane) Preload(name string, retrieved any) error {
+	if o == nil {
+		return nil
+	}
+
+	switch name {
+	case "PlaneCallNumberFlights":
+		rels, ok := retrieved.(FlightSlice)
+		if !ok {
+			return fmt.Errorf("plane cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.PlaneCallNumberFlights = rels
+		o.R.Loaded.PlaneCallNumberFlights = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.PlaneCallNumberPlane = o
+				rel.R.Loaded.PlaneCallNumberPlane = true
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("plane has no relationship %q", name)
+	}
+}
+
+type planePreloader struct{}
+
+func buildPlanePreloader() planePreloader {
+	return planePreloader{}
+}
+
+type planeThenLoader[Q orm.Loadable] struct {
+	PlaneCallNumberFlights func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+}
+
+func buildPlaneThenLoader[Q orm.Loadable]() planeThenLoader[Q] {
+	type PlaneCallNumberFlightsLoadInterface interface {
+		LoadPlaneCallNumberFlights(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+
+	return planeThenLoader[Q]{
+		PlaneCallNumberFlights: thenLoadBuilder[Q](
+			"PlaneCallNumberFlights",
+			func(ctx context.Context, exec bob.Executor, retrieved PlaneCallNumberFlightsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadPlaneCallNumberFlights(ctx, exec, mods...)
+			},
+		),
+	}
+}
+
+// LoadPlaneCallNumberFlights loads the plane's PlaneCallNumberFlights into the .R struct
+func (o *Plane) LoadPlaneCallNumberFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.PlaneCallNumberFlights = nil
+	o.R.Loaded.PlaneCallNumberFlights = false
+
+	related, err := o.PlaneCallNumberFlights(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.PlaneCallNumberPlane = o
+		rel.R.Loaded.PlaneCallNumberPlane = true
+	}
+
+	o.R.PlaneCallNumberFlights = related
+	o.R.Loaded.PlaneCallNumberFlights = true
+	return nil
+}
+
+// LoadPlaneCallNumberFlights loads the plane's PlaneCallNumberFlights into the .R struct
+func (os PlaneSlice) LoadPlaneCallNumberFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	flights, err := os.PlaneCallNumberFlights(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.PlaneCallNumberFlights = nil
+		o.R.Loaded.PlaneCallNumberFlights = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	planeByKey := make(map[string][]*Plane, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		planeByKey[o.CallNumber] = append(planeByKey[o.CallNumber], o)
+	}
+
+	for _, rel := range flights {
+
+		owners, ok := planeByKey[rel.PlaneCallNumber]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.PlaneCallNumberPlane = o
+			rel.R.Loaded.PlaneCallNumberPlane = true
+
+			o.R.PlaneCallNumberFlights = append(o.R.PlaneCallNumberFlights, rel)
+
+		}
+	}
+
+	return nil
+}
+
+// planeC is where relationship counts are stored.
+type planeC struct {
+	PlaneCallNumberFlights *int64
+}
+
+// PreloadCount sets a count in the C struct by name
+func (o *Plane) PreloadCount(name string, count int64) error {
+	if o == nil {
+		return nil
+	}
+
+	switch name {
+	case "PlaneCallNumberFlights":
+		o.C.PlaneCallNumberFlights = &count
+	}
+	return nil
+}
+
+type planeCountPreloader struct {
+	PlaneCallNumberFlights func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+}
+
+func buildPlaneCountPreloader() planeCountPreloader {
+	return planeCountPreloader{
+		PlaneCallNumberFlights: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*Plane]("PlaneCallNumberFlights", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Planes.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(Flights.NameAsExpr()),
+					sm.Where(psql.Quote(Flights.Alias(), "plane_call_number").EQ(psql.Quote(parent, "call_number"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
+	}
+}
+
+type planeCountThenLoader[Q orm.Loadable] struct {
+	PlaneCallNumberFlights func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+}
+
+func buildPlaneCountThenLoader[Q orm.Loadable]() planeCountThenLoader[Q] {
+	type PlaneCallNumberFlightsCountInterface interface {
+		LoadCountPlaneCallNumberFlights(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+
+	return planeCountThenLoader[Q]{
+		PlaneCallNumberFlights: countThenLoadBuilder[Q](
+			"PlaneCallNumberFlights",
+			func(ctx context.Context, exec bob.Executor, retrieved PlaneCallNumberFlightsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountPlaneCallNumberFlights(ctx, exec, mods...)
+			},
+		),
+	}
+}
+
+// LoadCountPlaneCallNumberFlights loads the count of PlaneCallNumberFlights into the C struct
+func (o *Plane) LoadCountPlaneCallNumberFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.PlaneCallNumberFlights(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.PlaneCallNumberFlights = &count
+	return nil
+}
+
+// LoadCountPlaneCallNumberFlights loads the count of PlaneCallNumberFlights for a slice in a single batch query
+func (os PlaneSlice) LoadCountPlaneCallNumberFlights(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkCallNumber := make(pgtypes.Array[string], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkCallNumber = append(pkCallNumber, o.CallNumber)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkCallNumber), "text[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		CallNumber string
+		Count      int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			Flights.Columns.PlaneCallNumber.As("call_number"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(Flights.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(Flights.Columns.PlaneCallNumber.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(Flights.Columns.PlaneCallNumber),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[string]int64, len(results))
+	for _, r := range results {
+		countMap[r.CallNumber] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.CallNumber]
+		o.C.PlaneCallNumberFlights = &count
+	}
+
+	return nil
+}
+
+type planeJoins[Q dialect.Joinable] struct {
+	typ                    string
+	PlaneCallNumberFlights modAs[Q, flightColumns]
+}
+
+func (j planeJoins[Q]) aliasedAs(alias string) planeJoins[Q] {
+	return buildPlaneJoins[Q](buildPlaneColumns(alias), j.typ)
+}
+
+func buildPlaneJoins[Q dialect.Joinable](cols planeColumns, typ string) planeJoins[Q] {
+	return planeJoins[Q]{
+		typ: typ,
+		PlaneCallNumberFlights: modAs[Q, flightColumns]{
+			c: Flights.Columns,
+			f: func(to flightColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Flights.NameExpr().As(to.Alias())).On(
+						to.PlaneCallNumber.EQ(cols.CallNumber),
+					))
+				}
+
+				return mods
+			},
+		},
 	}
 }

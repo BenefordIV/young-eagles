@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 	"time"
-	models2 "young-eagles/internal/db/gen/models"
+	"young-eagles/internal/db/gen/models"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/jaswdr/faker/v2"
@@ -65,9 +65,9 @@ func (o *PlaneTemplate) Apply(ctx context.Context, mods ...PlaneMod) {
 
 // setModelRels creates and sets the relationships on *models.Plane
 // according to the relationships in the template. Nothing is inserted into the db
-func (t PlaneTemplate) setModelRels(o *models2.Plane) {
+func (t PlaneTemplate) setModelRels(o *models.Plane) {
 	if t.r.PlaneCallNumberFlights != nil {
-		rel := models2.FlightSlice{}
+		rel := models.FlightSlice{}
 		for _, r := range t.r.PlaneCallNumberFlights {
 			related := r.o.BuildMany(r.number)
 			for _, rel := range related {
@@ -84,8 +84,8 @@ func (t PlaneTemplate) setModelRels(o *models2.Plane) {
 
 // BuildSetter returns an *models.PlaneSetter
 // this does nothing with the relationship templates
-func (o PlaneTemplate) BuildSetter() *models2.PlaneSetter {
-	m := &models2.PlaneSetter{}
+func (o PlaneTemplate) BuildSetter() *models.PlaneSetter {
+	m := &models.PlaneSetter{}
 
 	if o.CallNumber != nil {
 		val := o.CallNumber()
@@ -113,8 +113,8 @@ func (o PlaneTemplate) BuildSetter() *models2.PlaneSetter {
 
 // BuildManySetter returns an []*models.PlaneSetter
 // this does nothing with the relationship templates
-func (o PlaneTemplate) BuildManySetter(number int) []*models2.PlaneSetter {
-	m := make([]*models2.PlaneSetter, number)
+func (o PlaneTemplate) BuildManySetter(number int) []*models.PlaneSetter {
+	m := make([]*models.PlaneSetter, number)
 
 	for i := range m {
 		m[i] = o.BuildSetter()
@@ -126,8 +126,8 @@ func (o PlaneTemplate) BuildManySetter(number int) []*models2.PlaneSetter {
 // Build returns an *models.Plane
 // Related objects are also created and placed in the .R field
 // NOTE: Objects are not inserted into the database. Use PlaneTemplate.Create
-func (o PlaneTemplate) Build() *models2.Plane {
-	m := &models2.Plane{}
+func (o PlaneTemplate) Build() *models.Plane {
+	m := &models.Plane{}
 
 	if o.CallNumber != nil {
 		m.CallNumber = o.CallNumber()
@@ -153,8 +153,8 @@ func (o PlaneTemplate) Build() *models2.Plane {
 // BuildMany returns an models.PlaneSlice
 // Related objects are also created and placed in the .R field
 // NOTE: Objects are not inserted into the database. Use PlaneTemplate.CreateMany
-func (o PlaneTemplate) BuildMany(number int) models2.PlaneSlice {
-	m := make(models2.PlaneSlice, number)
+func (o PlaneTemplate) BuildMany(number int) models.PlaneSlice {
+	m := make(models.PlaneSlice, number)
 
 	for i := range m {
 		m[i] = o.Build()
@@ -163,7 +163,7 @@ func (o PlaneTemplate) BuildMany(number int) models2.PlaneSlice {
 	return m
 }
 
-func ensureCreatablePlane(m *models2.PlaneSetter) {
+func ensureCreatablePlane(m *models.PlaneSetter) {
 	if m.CallNumber.IsUnset() {
 		val := random_string(nil)
 		m.CallNumber = omit.From(val)
@@ -181,7 +181,7 @@ func ensureCreatablePlane(m *models2.PlaneSetter) {
 // insertOptRels creates and inserts any optional the relationships on *models.Plane
 // according to the relationships in the template.
 // any required relationship should have already exist on the model
-func (o *PlaneTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models2.Plane) error {
+func (o *PlaneTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.Plane) error {
 	var err error
 
 	isPlaneCallNumberFlightsDone, _ := planeRelPlaneCallNumberFlightsCtx.Value(ctx)
@@ -209,7 +209,7 @@ func (o *PlaneTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m 
 
 // Create builds a plane and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
-func (o *PlaneTemplate) Create(ctx context.Context, exec bob.Executor) (*models2.Plane, error) {
+func (o *PlaneTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Plane, error) {
 	var err error
 	opt := o.BuildSetter()
 	ensureCreatablePlane(opt)
@@ -219,7 +219,7 @@ func (o *PlaneTemplate) Create(ctx context.Context, exec bob.Executor) (*models2
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	m, err := models2.Planes.Insert(opt).One(ctx, exec)
+	m, err := models.Planes.Insert(opt).One(ctx, exec)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (o *PlaneTemplate) Create(ctx context.Context, exec bob.Executor) (*models2
 // MustCreate builds a plane and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
 // panics if an error occurs
-func (o *PlaneTemplate) MustCreate(ctx context.Context, exec bob.Executor) *models2.Plane {
+func (o *PlaneTemplate) MustCreate(ctx context.Context, exec bob.Executor) *models.Plane {
 	m, err := o.Create(ctx, exec)
 	if err != nil {
 		panic(err)
@@ -256,7 +256,7 @@ func (o *PlaneTemplate) MustCreate(ctx context.Context, exec bob.Executor) *mode
 // CreateOrFail builds a plane and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
 // It calls `tb.Fatal(err)` on the test/benchmark if an error occurs
-func (o *PlaneTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bob.Executor) *models2.Plane {
+func (o *PlaneTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bob.Executor) *models.Plane {
 	tb.Helper()
 	m, err := o.Create(ctx, exec)
 	if err != nil {
@@ -268,9 +268,9 @@ func (o *PlaneTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bo
 
 // CreateMany builds multiple planes and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
-func (o PlaneTemplate) CreateMany(ctx context.Context, exec bob.Executor, number int) (models2.PlaneSlice, error) {
+func (o PlaneTemplate) CreateMany(ctx context.Context, exec bob.Executor, number int) (models.PlaneSlice, error) {
 	var err error
-	m := make(models2.PlaneSlice, number)
+	m := make(models.PlaneSlice, number)
 
 	for i := range m {
 		m[i], err = o.Create(ctx, exec)
@@ -285,7 +285,7 @@ func (o PlaneTemplate) CreateMany(ctx context.Context, exec bob.Executor, number
 // MustCreateMany builds multiple planes and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
 // panics if an error occurs
-func (o PlaneTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, number int) models2.PlaneSlice {
+func (o PlaneTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, number int) models.PlaneSlice {
 	m, err := o.CreateMany(ctx, exec, number)
 	if err != nil {
 		panic(err)
@@ -296,7 +296,7 @@ func (o PlaneTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, nu
 // CreateManyOrFail builds multiple planes and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
 // It calls `tb.Fatal(err)` on the test/benchmark if an error occurs
-func (o PlaneTemplate) CreateManyOrFail(ctx context.Context, tb testing.TB, exec bob.Executor, number int) models2.PlaneSlice {
+func (o PlaneTemplate) CreateManyOrFail(ctx context.Context, tb testing.TB, exec bob.Executor, number int) models.PlaneSlice {
 	tb.Helper()
 	m, err := o.CreateMany(ctx, exec, number)
 	if err != nil {
@@ -517,7 +517,7 @@ func (m planeMods) AddNewPlaneCallNumberFlights(number int, mods ...FlightMod) P
 	})
 }
 
-func (m planeMods) AddExistingPlaneCallNumberFlights(existingModels ...*models2.Flight) PlaneMod {
+func (m planeMods) AddExistingPlaneCallNumberFlights(existingModels ...*models.Flight) PlaneMod {
 	return PlaneModFunc(func(ctx context.Context, o *PlaneTemplate) {
 		for _, em := range existingModels {
 			o.r.PlaneCallNumberFlights = append(o.r.PlaneCallNumberFlights, &planeRPlaneCallNumberFlightsR{

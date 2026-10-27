@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 	"time"
-	models2 "young-eagles/internal/db/gen/models"
+	"young-eagles/internal/db/gen/models"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/gofrs/uuid/v5"
@@ -68,9 +68,9 @@ func (o *PilotTemplate) Apply(ctx context.Context, mods ...PilotMod) {
 
 // setModelRels creates and sets the relationships on *models.Pilot
 // according to the relationships in the template. Nothing is inserted into the db
-func (t PilotTemplate) setModelRels(o *models2.Pilot) {
+func (t PilotTemplate) setModelRels(o *models.Pilot) {
 	if t.r.Flights != nil {
-		rel := models2.FlightSlice{}
+		rel := models.FlightSlice{}
 		for _, r := range t.r.Flights {
 			related := r.o.BuildMany(r.number)
 			for _, rel := range related {
@@ -87,8 +87,8 @@ func (t PilotTemplate) setModelRels(o *models2.Pilot) {
 
 // BuildSetter returns an *models.PilotSetter
 // this does nothing with the relationship templates
-func (o PilotTemplate) BuildSetter() *models2.PilotSetter {
-	m := &models2.PilotSetter{}
+func (o PilotTemplate) BuildSetter() *models.PilotSetter {
+	m := &models.PilotSetter{}
 
 	if o.ID != nil {
 		val := o.ID()
@@ -124,8 +124,8 @@ func (o PilotTemplate) BuildSetter() *models2.PilotSetter {
 
 // BuildManySetter returns an []*models.PilotSetter
 // this does nothing with the relationship templates
-func (o PilotTemplate) BuildManySetter(number int) []*models2.PilotSetter {
-	m := make([]*models2.PilotSetter, number)
+func (o PilotTemplate) BuildManySetter(number int) []*models.PilotSetter {
+	m := make([]*models.PilotSetter, number)
 
 	for i := range m {
 		m[i] = o.BuildSetter()
@@ -137,8 +137,8 @@ func (o PilotTemplate) BuildManySetter(number int) []*models2.PilotSetter {
 // Build returns an *models.Pilot
 // Related objects are also created and placed in the .R field
 // NOTE: Objects are not inserted into the database. Use PilotTemplate.Create
-func (o PilotTemplate) Build() *models2.Pilot {
-	m := &models2.Pilot{}
+func (o PilotTemplate) Build() *models.Pilot {
+	m := &models.Pilot{}
 
 	if o.ID != nil {
 		m.ID = o.ID()
@@ -170,8 +170,8 @@ func (o PilotTemplate) Build() *models2.Pilot {
 // BuildMany returns an models.PilotSlice
 // Related objects are also created and placed in the .R field
 // NOTE: Objects are not inserted into the database. Use PilotTemplate.CreateMany
-func (o PilotTemplate) BuildMany(number int) models2.PilotSlice {
-	m := make(models2.PilotSlice, number)
+func (o PilotTemplate) BuildMany(number int) models.PilotSlice {
+	m := make(models.PilotSlice, number)
 
 	for i := range m {
 		m[i] = o.Build()
@@ -180,7 +180,7 @@ func (o PilotTemplate) BuildMany(number int) models2.PilotSlice {
 	return m
 }
 
-func ensureCreatablePilot(m *models2.PilotSetter) {
+func ensureCreatablePilot(m *models.PilotSetter) {
 	if m.FirstName.IsUnset() {
 		val := random_string(nil)
 		m.FirstName = omit.From(val)
@@ -202,7 +202,7 @@ func ensureCreatablePilot(m *models2.PilotSetter) {
 // insertOptRels creates and inserts any optional the relationships on *models.Pilot
 // according to the relationships in the template.
 // any required relationship should have already exist on the model
-func (o *PilotTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models2.Pilot) error {
+func (o *PilotTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.Pilot) error {
 	var err error
 
 	isFlightsDone, _ := pilotRelFlightsCtx.Value(ctx)
@@ -230,7 +230,7 @@ func (o *PilotTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m 
 
 // Create builds a pilot and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
-func (o *PilotTemplate) Create(ctx context.Context, exec bob.Executor) (*models2.Pilot, error) {
+func (o *PilotTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Pilot, error) {
 	var err error
 	opt := o.BuildSetter()
 	ensureCreatablePilot(opt)
@@ -240,7 +240,7 @@ func (o *PilotTemplate) Create(ctx context.Context, exec bob.Executor) (*models2
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	m, err := models2.Pilots.Insert(opt).One(ctx, exec)
+	m, err := models.Pilots.Insert(opt).One(ctx, exec)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func (o *PilotTemplate) Create(ctx context.Context, exec bob.Executor) (*models2
 // MustCreate builds a pilot and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
 // panics if an error occurs
-func (o *PilotTemplate) MustCreate(ctx context.Context, exec bob.Executor) *models2.Pilot {
+func (o *PilotTemplate) MustCreate(ctx context.Context, exec bob.Executor) *models.Pilot {
 	m, err := o.Create(ctx, exec)
 	if err != nil {
 		panic(err)
@@ -277,7 +277,7 @@ func (o *PilotTemplate) MustCreate(ctx context.Context, exec bob.Executor) *mode
 // CreateOrFail builds a pilot and inserts it into the database
 // Relations objects are also inserted and placed in the .R field
 // It calls `tb.Fatal(err)` on the test/benchmark if an error occurs
-func (o *PilotTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bob.Executor) *models2.Pilot {
+func (o *PilotTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bob.Executor) *models.Pilot {
 	tb.Helper()
 	m, err := o.Create(ctx, exec)
 	if err != nil {
@@ -289,9 +289,9 @@ func (o *PilotTemplate) CreateOrFail(ctx context.Context, tb testing.TB, exec bo
 
 // CreateMany builds multiple pilots and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
-func (o PilotTemplate) CreateMany(ctx context.Context, exec bob.Executor, number int) (models2.PilotSlice, error) {
+func (o PilotTemplate) CreateMany(ctx context.Context, exec bob.Executor, number int) (models.PilotSlice, error) {
 	var err error
-	m := make(models2.PilotSlice, number)
+	m := make(models.PilotSlice, number)
 
 	for i := range m {
 		m[i], err = o.Create(ctx, exec)
@@ -306,7 +306,7 @@ func (o PilotTemplate) CreateMany(ctx context.Context, exec bob.Executor, number
 // MustCreateMany builds multiple pilots and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
 // panics if an error occurs
-func (o PilotTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, number int) models2.PilotSlice {
+func (o PilotTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, number int) models.PilotSlice {
 	m, err := o.CreateMany(ctx, exec, number)
 	if err != nil {
 		panic(err)
@@ -317,7 +317,7 @@ func (o PilotTemplate) MustCreateMany(ctx context.Context, exec bob.Executor, nu
 // CreateManyOrFail builds multiple pilots and inserts them into the database
 // Relations objects are also inserted and placed in the .R field
 // It calls `tb.Fatal(err)` on the test/benchmark if an error occurs
-func (o PilotTemplate) CreateManyOrFail(ctx context.Context, tb testing.TB, exec bob.Executor, number int) models2.PilotSlice {
+func (o PilotTemplate) CreateManyOrFail(ctx context.Context, tb testing.TB, exec bob.Executor, number int) models.PilotSlice {
 	tb.Helper()
 	m, err := o.CreateMany(ctx, exec, number)
 	if err != nil {
@@ -602,7 +602,7 @@ func (m pilotMods) AddNewFlights(number int, mods ...FlightMod) PilotMod {
 	})
 }
 
-func (m pilotMods) AddExistingFlights(existingModels ...*models2.Flight) PilotMod {
+func (m pilotMods) AddExistingFlights(existingModels ...*models.Flight) PilotMod {
 	return PilotModFunc(func(ctx context.Context, o *PilotTemplate) {
 		for _, em := range existingModels {
 			o.r.Flights = append(o.r.Flights, &pilotRFlightsR{
