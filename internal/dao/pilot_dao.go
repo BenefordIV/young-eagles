@@ -79,7 +79,9 @@ func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *models.Pilot) (*m
 		return nil, err
 	}
 
-	s := &dbmodels.PilotSetter{}
+	s := &dbmodels.PilotSetter{
+		UpdatedAt: omit.From(time.Now()),
+	}
 
 	if update.PilotFirstName != "" {
 		s.FirstName = omit.From(update.PilotFirstName)
@@ -92,6 +94,10 @@ func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *models.Pilot) (*m
 	}
 	if update.EaaChapterNumber != 0 {
 		s.EaaChapter = omit.From(int32(update.EaaChapterNumber))
+	}
+
+	if len(s.SetColumns()) == 0 {
+		return models.PilotFromDb(*existing), nil
 	}
 
 	if err = existing.Update(ctx, p.dbConn, s); err != nil {

@@ -32,6 +32,8 @@ func TestAddPilotDao(t *testing.T) {
 		added, err := pilotDao.AddPilot(ctx, p)
 		require.NoError(t, err)
 		require.NotEmpty(t, added)
+
+		_, _ = dbmodels.Pilots.Delete(dbmodels.DeleteWhere.Pilots.ID.EQ(added.PilotUuid)).Exec(ctx, bdb)
 	})
 }
 

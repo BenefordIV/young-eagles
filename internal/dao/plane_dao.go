@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"time"
 	"young-eagles/external/models"
 	dbmodels "young-eagles/internal/db/gen/models"
 
@@ -69,6 +70,7 @@ func (p planeDaoImpl) UpdatePlane(ctx context.Context, plane *models.Plane) erro
 		CallNumber: omit.From(plane.CallNumber),
 		Model:      omit.From(plane.PlaneModel),
 		Make:       omit.From(plane.PlaneMake),
+		UpdatedAt:  omit.From(time.Now()),
 	}
 
 	if err = existing.Update(ctx, p.dbConn, s); err != nil {
