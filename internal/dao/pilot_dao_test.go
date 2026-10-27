@@ -5,6 +5,7 @@ import (
 	"testing"
 	"young-eagles/external/models"
 	"young-eagles/internal/dao"
+	dbmodels "young-eagles/internal/db/gen/models"
 	"young-eagles/internal/db/gen/models/factory"
 	"young-eagles/test"
 
@@ -98,6 +99,9 @@ func TestUpdatePilot(t *testing.T) {
 		factory.PilotMods.Email("testemail@test.com"),
 		factory.PilotMods.EaaChapterFunc(func() int32 { return 123 }),
 	).Create(ctx, bdb)
+	defer func() {
+		_, _ = dbmodels.Pilots.Delete(dbmodels.DeleteWhere.Pilots.ID.EQ(tp.ID)).Exec(ctx, bdb)
+	}()
 	require.NoError(t, err)
 	require.NotEmpty(t, tp)
 	t.Run("success", func(t *testing.T) {
@@ -115,6 +119,24 @@ func TestUpdatePilot(t *testing.T) {
 		require.Equal(t, update.PilotFirstName, updated.PilotFirstName)
 		require.Equal(t, update.PilotLastName, updated.PilotLastName)
 		require.Equal(t, update.EaaChapterNumber, updated.EaaChapterNumber)
+		require.Equal(t, update.PilotEmail, updated.PilotEmail)
+	})
+
+	t.Run("success with no name changes", func(t *testing.T) {
+		ex, err := pilotDao.GetPilotByUUID(ctx, tp.ID)
+		require.NoError(t, err)
+
+		update := models.Pilot{
+			PilotUuid:  tp.ID,
+			PilotEmail: "newTestEmail",
+		}
+
+		updated, err := pilotDao.UpdatePilot(ctx, &update)
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+		require.Equal(t, updated.PilotFirstName, ex.PilotFirstName)
+		require.Equal(t, updated.PilotLastName, ex.PilotLastName)
+		require.Equal(t, ex.EaaChapterNumber, updated.EaaChapterNumber)
 		require.Equal(t, update.PilotEmail, updated.PilotEmail)
 	})
 }

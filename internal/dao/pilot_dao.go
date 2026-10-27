@@ -79,11 +79,19 @@ func (p pilotDaoImpl) UpdatePilot(ctx context.Context, update *models.Pilot) (*m
 		return nil, err
 	}
 
-	s := &dbmodels.PilotSetter{
-		FirstName:  omit.From(update.PilotFirstName),
-		LastName:   omit.From(update.PilotLastName),
-		Email:      omit.From(update.PilotEmail),
-		EaaChapter: omit.From(int32(update.EaaChapterNumber)),
+	s := &dbmodels.PilotSetter{}
+
+	if update.PilotFirstName != "" {
+		s.FirstName = omit.From(update.PilotFirstName)
+	}
+	if update.PilotLastName != "" {
+		s.LastName = omit.From(update.PilotLastName)
+	}
+	if update.PilotEmail != "" {
+		s.Email = omit.From(update.PilotEmail)
+	}
+	if update.EaaChapterNumber != 0 {
+		s.EaaChapter = omit.From(int32(update.EaaChapterNumber))
 	}
 
 	if err = existing.Update(ctx, p.dbConn, s); err != nil {
